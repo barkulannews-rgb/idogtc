@@ -44,7 +44,7 @@ export function DatabaseStoreProvider({ children }: { children: React.ReactNode 
   }
 
   if (!snapshot) return <div role="status" className="min-h-screen flex items-center justify-center bg-[#F5F5F5] p-6 text-center">
-    {error ? <div><p>{error}</p><button onClick={() => window.location.reload()} className="mt-4 underline">Isku day mar kale / Retry</button></div> : 'Xogta waa la soo rarayaa / Loading…'}
+    {error ? <div><p>{error}</p><button onClick={() => window.location.reload()} className="mt-4 underline">Isku day mar kale / Retry</button></div> : 'Loading...'}
   </div>;
 
   const value: StoreContextType = {
