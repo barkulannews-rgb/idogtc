@@ -20,3 +20,11 @@ The one-time GitHub workflow input `import_catalogue=true` (with `dry_run=false`
 The private snapshot is stored at `HOME/idogtc-catalogue-backups/before-catalogue-*.json`. This is a store-content snapshot, not a full database backup. The ordinary deployment never runs imports. New products are managed through the existing admin Products tab, with item code, unit, quote pricing and illustration controls.
 
 Checks: `php tests/catalogue-import.php`, the real PHP/MariaDB order tests, and the database-mode Playwright tests for all catalogue pages, search by item code, quotes, mobile layout and admin edits.
+
+## Product-specific images and quote links
+
+Photorealistic generic product illustrations are generated with the built-in `image_gen` tool, individually from each item's name and supplied specification. Exact prompts are recorded in `product-image-prompts.json`. They depict unbranded examples, not actual inventory photos or verified packaging. Optimized JPEGs live in `public/images/products/`; original PNGs are retained locally in ignored `output/imagegen/products/`. Run `scripts/optimize-product-images.ps1` to create the 640-pixel web thumbnails.
+
+`product-images.json` maps only completed images to item codes. The optional `update_product_images=true` deployment updates only original category-illustration placeholders, keeps the illustration label, makes a private pre-update snapshot, and preserves owner-selected photos, prices, settings and orders. It never changes product names or item codes. Repeat runs skip already updated images. The normal code deployment does not run the image update.
+
+Customer-facing “Request quote” prices link directly to the configured header WhatsApp number, falling back to the Bosaso phone. The bilingual prefilled message includes the product name, item code, quantity and unit. Paid products continue displaying their price normally. The whole-cart quote action keeps the existing inquiry recording flow.

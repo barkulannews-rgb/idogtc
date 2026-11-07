@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Writable } from 'node:stream';
-import { ftpConfiguration, uploadPlan, verifyRoot, publish } from '../scripts/deploy-ftps.mjs';
+import { ftpConfiguration, uploadPlan, verifyRoot, publish, changedFiles } from '../scripts/deploy-ftps.mjs';
 
 const env = { IDO_FTP_HOST: 'srv1101.sostectechno.com', IDO_FTP_USER: 'githubdeploy@idogtc.com', IDO_FTP_PASSWORD: 'test-only-password' };
 
@@ -62,4 +62,18 @@ test('preview never creates directories, uploads or renames; real uploads rename
   assert.equal(calls.at(-1)[0], 'rename');
   assert.equal(calls.at(-1)[2], 'index.html');
   assert.ok(calls.find(call => call[0] === 'upload')[1].endsWith('.php'));
+});
+
+test('static content is skipped only when actual bytes match, and PHP is always uploaded', async () => {
+  const root = path.resolve('.local-tests'); fs.mkdirSync(root, { recursive: true });
+  const source = fs.mkdtempSync(path.join(root, 'ftp-hashes-'));
+  try {
+    for (const name of ['images/same.jpg', 'images/changed.jpg', 'images/missing.jpg', 'api/index.php', 'index.html']) {
+      fs.mkdirSync(path.dirname(path.join(source, name)), { recursive: true }); fs.writeFileSync(path.join(source, name), 'local-file');
+    }
+    const result = await changedFiles(source, ['images/same.jpg', 'images/changed.jpg', 'images/missing.jpg', 'api/index.php', 'index.html'], async url =>
+      url.endsWith('same.jpg') ? new Response('local-file', { headers: { 'content-type': 'image/jpeg' } }) :
+        url.endsWith('missing.jpg') ? new Response('local-file', { headers: { 'content-type': 'text/html' } }) : new Response('other-file'));
+    assert.deepEqual(result, ['images/changed.jpg', 'images/missing.jpg', 'api/index.php', 'index.html']);
+  } finally { assert.equal(path.dirname(source), root); fs.rmSync(source, { recursive: true, force: true }); }
 });

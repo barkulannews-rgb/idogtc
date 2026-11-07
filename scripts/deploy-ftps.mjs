@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Writable } from 'node:stream';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { Client } from 'basic-ftp';
 
@@ -76,10 +76,32 @@ export async function publish(client, source, files, dryRun) {
   }
 }
 
+export async function changedFiles(source, files, request = fetch) {
+  const unchanged = new Set();
+  let index = 0;
+  async function worker() {
+    while (index < files.length) {
+      const file = files[index++];
+      // Compare public static bytes only. PHP endpoints must always be uploaded as code.
+      if (!file.startsWith('images/') && !file.startsWith('assets/') && file !== 'logo.png') continue;
+      try {
+        const response = await request(`https://idogtc.com/${file}`, { signal: AbortSignal.timeout(15000) });
+        if (!response.ok || (response.headers.get('content-type') || '').includes('text/html')) continue;
+        const local = fs.readFileSync(path.join(source, file));
+        const remote = Buffer.from(await response.arrayBuffer());
+        if (createHash('sha256').update(local).digest('hex') === createHash('sha256').update(remote).digest('hex')) unchanged.add(file);
+      } catch { /* If comparison fails, use the normal verified FTPS upload. */ }
+    }
+  }
+  await Promise.all(Array.from({ length: 6 }, worker));
+  console.log(`Unchanged static files preserved: ${unchanged.size}`);
+  return files.filter(file => !unchanged.has(file));
+}
+
 export async function deployFtps(env = process.env) {
   const config = ftpConfiguration(env);
   const source = path.resolve('release/public_html');
-  const files = uploadPlan(source);
+  const files = await changedFiles(source, uploadPlan(source));
   const client = new Client(30000);
   // Protocol debug logging must remain off: it can expose FTP credentials.
   client.ftp.verbose = false;
