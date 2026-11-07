@@ -69,6 +69,36 @@ function validateHeader(array $header): void {
         }
     }
 }
+function validateFooter(array $footer): void {
+    $text = function ($value): void {
+        if (!is_array($value)) fail('Invalid footer text.');
+        foreach (['en','so'] as $language) if (!isset($value[$language]) || !is_string($value[$language]) || strlen($value[$language]) > 8000) fail('Invalid footer translation.');
+    };
+    $text($footer['description'] ?? null); $text($footer['copyright'] ?? null);
+    foreach (['labels','visibility','social'] as $key) if (!isset($footer[$key]) || !is_array($footer[$key])) fail('Invalid footer options.');
+    foreach (['contact','shop','account','newsletter','newsletterDescription','emailPlaceholder','subscribe','social','domain'] as $key) $text($footer['labels'][$key] ?? null);
+    foreach (['enabled','contact','shop','account','newsletter','social','copyright','domain'] as $key) if (!isset($footer['visibility'][$key]) || !is_bool($footer['visibility'][$key])) fail('Invalid footer visibility.');
+    foreach (['facebook','instagram','twitter','linkedin'] as $key) {
+        $url = $footer['social'][$key] ?? null;
+        if (!is_string($url) || strlen($url) > 2000) fail('Invalid social media URL.');
+        if ($url !== '') {
+            $parts = parse_url($url);
+            if (!filter_var($url, FILTER_VALIDATE_URL) || !is_array($parts) || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host']) || isset($parts['user']) || isset($parts['pass'])) fail('Social media links must use https.');
+        }
+    }
+    foreach (['shopLinks','accountLinks'] as $group) {
+        $links = $footer[$group] ?? null;
+        if (!is_array($links) || array_values($links) !== $links || count($links) > 12) fail('Invalid footer menu.');
+        $ids = [];
+        foreach ($links as $link) {
+            if (!is_array($link)) fail('Invalid footer link.');
+            textFields($link, ['id','target']); $text($link['label'] ?? null);
+            $target = $link['target'];
+            if ($link['id'] === '' || in_array($link['id'], $ids, true) || trim($link['label']['en']) === '' || !isset($link['visible']) || !is_bool($link['visible']) || (!in_array($target, ['top','categories','recent','about','contact','cart','wishlist'], true) && !(str_starts_with($target, 'category:') && strlen($target) > 9))) fail('Invalid footer link.');
+            $ids[] = $link['id'];
+        }
+    }
+}
 function validateState(array $state): void {
     $definitions = [
         'products' => ['name','category','price','oldPrice','origin','specs'],
@@ -96,6 +126,10 @@ function validateState(array $state): void {
     if (array_key_exists('header', $state['companySettings'])) {
         if (!is_array($state['companySettings']['header'])) fail('Invalid header settings.');
         validateHeader($state['companySettings']['header']);
+    }
+    if (array_key_exists('footer', $state['companySettings'])) {
+        if (!is_array($state['companySettings']['footer'])) fail('Invalid footer settings.');
+        validateFooter($state['companySettings']['footer']);
     }
     $names = [];
     foreach ($state['categories'] as $category) {

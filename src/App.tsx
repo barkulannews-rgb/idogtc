@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, Heart, ShoppingCart, ChevronDown, Check, Phone, Mail,
   MapPin, Star, ArrowRight, Truck, RotateCcw,
-  Headphones, Facebook, Twitter, Linkedin, Instagram, X, Eye,
+  Headphones, X, Eye,
   MessageCircle, Menu, Trash2, Plus, Minus, ArrowUp, Globe, Shield,
   Ship, Sun, Award, Anchor, Package, ArrowLeft
 } from 'lucide-react';
@@ -13,11 +13,12 @@ import { I18N } from './data/i18n';
 import { productPrice, quoteLabel } from './utils/productPrice';
 import { ProductPrice } from './components/ProductPrice';
 import { CategoryBrowser } from './components/CategoryBrowser';
+import { SiteFooter } from './components/SiteFooter';
 import { categoryUrl } from './utils/categoryUrl';
 import { getHeaderSettings, headerText, headerWhatsApp } from './data/headerSettings';
-import { api, DATABASE_MODE, reportApiError } from './utils/api';
+import { DATABASE_MODE, reportApiError } from './utils/api';
 import { DatabaseStoreProvider } from './context/DatabaseStoreProvider';
-import { readStored, writeStored, useStoredState } from './utils/storage';
+import { useStoredState } from './utils/storage';
 
 interface CartItem {
   product: Product;
@@ -72,7 +73,6 @@ function Storefront() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
 
-  const [newsletterEmail, setNewsletterEmail] = useState('');
   // AED is pegged to USD; stored product and order amounts remain in USD.
   const formatPrice = (amount: number) => new Intl.NumberFormat('en-US', {
     style: 'currency', currency: selectedCurrency
@@ -142,11 +142,6 @@ function Storefront() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const openCategory = (name: string) => {
-    const category = categories.find(item => item.name === name);
-    window.location.assign(category ? categoryUrl(category.id) : '/#categories');
-  };
 
   // Smooth scroll navigation handler
   const scrollToSection = (id: string) => {
@@ -333,7 +328,7 @@ function Storefront() {
               </React.Fragment>)}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 font-mono text-[11px] text-[#3D464D] shrink-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-mono text-[11px] text-[#3D464D] min-w-0">
               <a href={`tel:${companySettings.bosasoPhone.replace(/\s+/g, '')}`} className="hidden sm:flex items-center gap-1 font-semibold hover:text-[#D97706]">
                 <Phone className="w-3 h-3 text-[#FFD333]" /> {ht(header.labels.bosaso)}: {companySettings.bosasoPhone}
               </a>
@@ -1197,93 +1192,7 @@ function Storefront() {
       {/* ========================================================
           13. FOOTER
       ======================================================== */}
-      <footer className="bg-[#3D464D] text-[#E5E5E5] pt-8 sm:pt-12 pb-6 text-xs mt-8 sm:mt-12">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 pb-6 sm:pb-8 border-b border-[#525D66]">
-
-          <div className="space-y-2 sm:space-y-3">
-            <h5 className="text-white text-uppercase mb-2 sm:mb-4 font-bold text-xs sm:text-sm tracking-wider">{t.getInTouch}</h5>
-            <p className="text-xs text-[#CBD5E1] leading-relaxed font-normal">
-              {companySettings.aboutText}
-            </p>
-            <p className="flex items-center gap-2 font-normal"><MapPin className="w-3.5 h-3.5 text-[#FFD333] shrink-0" /> Bosaso, Puntland, Somalia</p>
-            <p className="flex items-center gap-2 font-normal"><Mail className="w-3.5 h-3.5 text-[#FFD333] shrink-0" /> {companySettings.email}</p>
-            <p className="flex items-center gap-2 font-normal"><Phone className="w-3.5 h-3.5 text-[#FFD333] shrink-0" /> {companySettings.bosasoPhone} / {companySettings.dubaiPhone}</p>
-          </div>
-
-          <div className="space-y-2">
-            <h5 className="text-white text-uppercase mb-2 sm:mb-4 font-bold text-xs sm:text-sm tracking-wider">{t.quickShop}</h5>
-            <ul className="space-y-1 sm:space-y-1.5 text-xs text-[#CBD5E1] font-normal">
-              <li><button onClick={() => { openCategory('Foodstuffs & Commodities'); }} className="hover:text-[#FFD333] cursor-pointer">Foodstuffs & Commodities</button></li>
-              <li><button onClick={() => { openCategory('Construction Steel & Cement'); }} className="hover:text-[#FFD333] cursor-pointer">Steel Rebar & Cement</button></li>
-              <li><button onClick={() => { openCategory('Electronics & Solar Power'); }} className="hover:text-[#FFD333] cursor-pointer">Solar Systems & Batteries</button></li>
-              <li><button onClick={() => { openCategory('Heavy Machinery & Auto Parts'); }} className="hover:text-[#FFD333] cursor-pointer">Heavy Machinery & Spare Parts</button></li>
-              <li><button onClick={() => { setSelectedCategory('All'); scrollToSection('recent'); }} className="hover:text-[#FFD333] cursor-pointer">{t.showAllProducts}</button></li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
-            <h5 className="text-white text-uppercase mb-2 sm:mb-4 font-bold text-xs sm:text-sm tracking-wider">{t.myAccount}</h5>
-            <ul className="space-y-1 sm:space-y-1.5 text-xs text-[#CBD5E1] font-normal">
-              <li><button onClick={() => setShowCartDrawer(true)} className="hover:text-[#FFD333] cursor-pointer">{t.cart} ({totalCartCount})</button></li>
-              <li><button onClick={() => setShowWishlistModal(true)} className="hover:text-[#FFD333] cursor-pointer">{t.wishlist} ({wishlistItems.length})</button></li>
-              <li><button onClick={() => scrollToSection('about')} className="hover:text-[#FFD333] cursor-pointer">{t.aboutUs}</button></li>
-              <li><button onClick={() => scrollToSection('contact')} className="hover:text-[#FFD333] cursor-pointer">{t.contactUs}</button></li>
-            </ul>
-          </div>
-
-          <div className="space-y-2 sm:space-y-3">
-            <h5 className="text-white text-uppercase mb-2 sm:mb-4 font-bold text-xs sm:text-sm tracking-wider">{t.newsletter}</h5>
-            <p className="text-xs text-[#CBD5E1] font-normal">{t.newsletterDesc}</p>
-            <form className="flex" onSubmit={async (event) => {
-              event.preventDefault();
-              const email = newsletterEmail.trim().toLowerCase();
-              if (DATABASE_MODE) {
-                try {
-                  await api('subscribe', 'POST', { email });
-                  setNewsletterEmail('');
-                  showToast(language === 'en' ? 'Thank you for subscribing!' : 'Waad ku mahadsan tahay is-qoristaada!');
-                } catch (error) { reportApiError(error); }
-                return;
-              }
-              const subscribers = readStored<string[]>('idogtc_subscribers', [], v => Array.isArray(v) && v.every(email => typeof email === 'string'));
-              if (writeStored('idogtc_subscribers', [...new Set([...subscribers, email])])) {
-                setNewsletterEmail('');
-                showToast(language === 'en' ? 'Email saved on this device.' : 'Email-ka waxaa lagu kaydiyey qalabkan.');
-              }
-            }}>
-              <input
-                type="email"
-                placeholder={t.yourEmail}
-                value={newsletterEmail}
-                onChange={event => setNewsletterEmail(event.target.value)}
-                required
-                className="p-2 w-full text-xs text-[#3D464D] focus:outline-none rounded-l font-normal bg-white"
-              />
-              <button
-                type="submit"
-                className="bg-[#FFD333] text-[#3D464D] font-bold px-3 rounded-r hover:bg-[#E5BE2C] shrink-0 cursor-pointer"
-              >
-                {t.signUp}
-              </button>
-            </form>
-            <h6 className="text-white text-uppercase mt-2 sm:mt-4 mb-1 font-bold text-xs tracking-wider">{t.followUs}</h6>
-            <div className="flex items-center gap-2 text-white">
-              <a href="#" className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-[#4F5B66] flex items-center justify-center hover:bg-[#FFD333] hover:text-[#3D464D] transition-colors"><Twitter className="w-3.5 h-3.5" /></a>
-              <a href="#" className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-[#4F5B66] flex items-center justify-center hover:bg-[#FFD333] hover:text-[#3D464D] transition-colors"><Facebook className="w-3.5 h-3.5" /></a>
-              <a href="#" className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-[#4F5B66] flex items-center justify-center hover:bg-[#FFD333] hover:text-[#3D464D] transition-colors"><Linkedin className="w-3.5 h-3.5" /></a>
-              <a href="#" className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-[#4F5B66] flex items-center justify-center hover:bg-[#FFD333] hover:text-[#3D464D] transition-colors"><Instagram className="w-3.5 h-3.5" /></a>
-            </div>
-          </div>
-
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 pt-4 sm:pt-6 flex flex-col md:flex-row items-center justify-between text-[#94A3B8] gap-2 font-normal text-center sm:text-left">
-          <p>© {new Date().getFullYear()} <strong className="text-white font-bold">{companySettings.name}</strong>. {t.allRightsReserved}</p>
-          <div className="flex items-center gap-3 font-mono text-[10px] sm:text-[11px]">
-            <span>{t.officialDomain}: <a href={companySettings.domain} className="text-[#FFD333] hover:underline">{companySettings.domain}</a></span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter cartCount={totalCartCount} wishlistCount={wishlistItems.length} onCart={() => setShowCartDrawer(true)} onWishlist={() => setShowWishlistModal(true)} onToast={showToast} />
 
       {/* ========================================================
           14. SHOPPING CART DRAWER

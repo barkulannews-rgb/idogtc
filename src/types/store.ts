@@ -46,6 +46,19 @@ export interface CompanySettings {
   dubaiAddress: string;
   aboutText: string;
   header?: HeaderSettings;
+  footer?: FooterSettings;
+}
+
+export type FooterTarget = 'top' | 'categories' | 'recent' | 'about' | 'contact' | 'cart' | 'wishlist' | `category:${string}`;
+export interface FooterLink { id: string; label: HeaderText; target: FooterTarget; visible: boolean }
+export interface FooterSettings {
+  description: HeaderText;
+  copyright: HeaderText;
+  labels: Record<'contact' | 'shop' | 'account' | 'newsletter' | 'newsletterDescription' | 'emailPlaceholder' | 'subscribe' | 'social' | 'domain', HeaderText>;
+  shopLinks: FooterLink[];
+  accountLinks: FooterLink[];
+  social: Record<'facebook' | 'instagram' | 'twitter' | 'linkedin', string>;
+  visibility: Record<'enabled' | 'contact' | 'shop' | 'account' | 'newsletter' | 'social' | 'copyright' | 'domain', boolean>;
 }
 
 export type HeaderTarget = 'top' | 'categories' | 'featured' | 'recent' | 'about' | 'contact';

@@ -14,6 +14,7 @@ import { api, DATABASE_MODE, reportApiError, session } from '../utils/api';
 import { ImagePickerField } from './ImagePickerField';
 import { processImageFile } from '../utils/imageUpload';
 import { HeaderEditor } from './HeaderEditor';
+import { FooterEditor } from './FooterEditor';
 import { getHeaderSettings } from '../data/headerSettings';
 import './AdminPanel.css';
 import { categoryImage } from '../utils/categoryImage';
@@ -67,7 +68,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
   }, []);
 
   // Active navigation tab
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'slides' | 'categories' | 'media' | 'promos' | 'partners' | 'settings' | 'orders' | 'header'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'slides' | 'categories' | 'media' | 'promos' | 'partners' | 'settings' | 'orders' | 'header' | 'footer'>('dashboard');
 
   // Search and filter for products
   const [productSearch, setProductSearch] = useState('');
@@ -706,6 +707,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
               )}
             </button>
 
+            <button type="button" onClick={() => setActiveTab('footer')} className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'footer' ? 'bg-[#FFD333] text-[#3D464D] shadow' : 'text-[#CBD5E1] hover:bg-[#334155]'}`}><LayoutDashboard className="w-4 h-4" /><span>Footer</span></button>
             <button onClick={() => setActiveTab('header')} className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${activeTab === 'header' ? 'bg-[#FFD333] text-[#3D464D] shadow' : 'text-[#CBD5E1] hover:bg-[#334155]'}`}>
               <LayoutDashboard className="w-4 h-4" /><span>Header / Menu & Logo</span>
             </button>
@@ -747,6 +749,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
           
           {/* TAB 1: DASHBOARD OVERVIEW */}
           {activeTab === 'header' && <HeaderEditor />}
+          {activeTab === 'footer' && <FooterEditor />}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               
