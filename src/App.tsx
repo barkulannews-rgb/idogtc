@@ -40,6 +40,9 @@ function Storefront() {
   // Prioritize the company's imported catalogue; retain older demo items at the end.
   const products = React.useMemo(() => [...storeProducts].sort((a, b) => Number(Boolean(b.catalogueGroup)) - Number(Boolean(a.catalogueGroup))), [storeProducts]);
   const categories = React.useMemo(() => [...storeCategories].sort((a, b) => Number(Boolean(b.catalogueGroup)) - Number(Boolean(a.catalogueGroup))), [storeCategories]);
+  const [categoryShuffle] = useState(() => new Map(storeCategories.map(category => [category.id, Math.random()])));
+  const categoryCards = React.useMemo(() => [...categories].sort((a, b) =>
+    (categoryShuffle.get(a.id) ?? 1) - (categoryShuffle.get(b.id) ?? 1)), [categories, categoryShuffle]);
   const hasCompanyCatalogue = products.some(product => product.catalogueGroup);
 
   const t = I18N[language];
@@ -790,9 +793,9 @@ function Storefront() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-            {(expandedCategories ? categories : categories.slice(0, 6)).map((cat, idx) => (
+            {(expandedCategories ? categoryCards : categoryCards.slice(0, 6)).map(cat => (
               <div
-                key={idx}
+                key={cat.id}
                 onClick={() => {
                   setSelectedCategory(cat.name); setCatalogueGroup('All');
                   scrollToSection('featured');
