@@ -27,7 +27,7 @@ Repository Variables:
 
 Password-ka kaliya adiga ayaa gelinaya: https://github.com/barkulannews-rgb/idogtc/settings/secrets/actions/new
 
-- Name: SOSTEK_FTP_PASSWORD
+- Name: SOSTEK_FTP_PASSWORD (magaca GITHUBDEPLOY sidoo kale workflow-gu wuu aqbalaa).
 - Secret: password-ka FTP account-ka githubdeploy@idogtc.com (ma aha kan cPanel ama database-ka).
 - Add secret riix. Password-ka repo ama chat ha gelin.
 

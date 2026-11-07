@@ -75,6 +75,6 @@ jobs:
           IDO_FTP_HOST: ${{ vars.SOSTEK_FTP_HOST }}
           IDO_FTP_USER: ${{ vars.SOSTEK_FTP_USER }}
           IDO_FTP_PORT: ${{ vars.SOSTEK_FTP_PORT }}
-          IDO_FTP_PASSWORD: ${{ secrets.SOSTEK_FTP_PASSWORD }}
+          IDO_FTP_PASSWORD: ${{ secrets.SOSTEK_FTP_PASSWORD || secrets.GITHUBDEPLOY }}
           IDO_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
         run: node scripts/deploy-ftps.mjs
