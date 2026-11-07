@@ -71,3 +71,40 @@
 }
 @media (prefers-reduced-motion: reduce) { .ido-admin *, .ido-admin *::before, .ido-admin *::after { animation: none !important; transition: none !important; } }
 .ido-admin .admin-sidebar [class~="text-[#CBD5E1]"] { color: #c5d3e5; }
+/* Text on light surfaces needs its own palette, including nested editors. */
+.ido-admin [class~="text-[#FFD333]"] { color: #765500; }
+.ido-admin .text-slate-200, .ido-admin .text-slate-300 { color: #34465d; }
+.ido-admin .text-amber-100, .ido-admin .text-amber-200, .ido-admin .text-amber-300, .ido-admin .text-amber-400 { color: #765500; }
+.ido-admin .text-rose-200, .ido-admin .text-rose-300, .ido-admin .text-rose-400 { color: #ae2941; }
+.ido-admin .text-slate-500 { color: #5b6b80; }
+.ido-admin [class~="hover:text-amber-300"]:hover { color: #604300; }
+.ido-admin [class~="hover:text-rose-200"]:hover { color: #8d1c30; }
+.ido-admin .admin-sidebar [class~="text-[#FFD333]"] { color: #ffd333; }
+.ido-admin .admin-sidebar .text-slate-300 { color: #c5d3e5; }
+.ido-admin [class~="border-slate-600"] { border-color: #cbd5e1; }
+.ido-admin .admin-sidebar [class~="border-slate-600"] { border-color: #52657c; }
+.header-editor { width: 100%; }
+.header-savebar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border-radius: 12px; }
+.header-savebar [role="status"] { margin: 0; color: #34465d; }
+.header-tabs { display: flex; gap: 6px; padding: 6px; background: #e7edf5; border-radius: 12px; overflow-x: auto; }
+.ido-admin .header-tabs button { flex: 1 0 auto; padding: 11px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #465970; white-space: nowrap; }
+.ido-admin .header-tabs button:hover { background: #f5f7fb; color: #23344a; }
+.ido-admin .header-tabs button[aria-selected="true"] { background: #17283f; color: #fff; box-shadow: 0 2px 6px #17283f20; }
+.header-editor [role="tabpanel"] { padding: 24px; margin-top: 0; }
+.header-editor [role="tabpanel"][hidden] { display: none; }
+.header-editor [data-testid="header-menu-row"] { border-color: #dce3ed; background: #f8fafc; border-radius: 12px; padding: 16px; }
+.header-editor label { line-height: 1.7; }
+.header-editor input:not([type="checkbox"]):not([type="file"]), .header-editor select { margin-top: 5px; min-height: 40px; border-radius: 8px; }
+.header-editor input[type="checkbox"] { accent-color: #23344a; width: 15px; height: 15px; vertical-align: middle; margin-right: 5px; }
+@media (max-width: 767px) {
+  .header-editor [role="tabpanel"] { padding: 16px; }
+  .header-tabs { flex-wrap: wrap; overflow-x: visible; }
+  .ido-admin .header-tabs button { flex: 1 1 40%; padding: 10px 8px; }
+}
+.header-menu-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; color: #23344a; font-size: 13px; font-weight: 700; }
+.header-menu-toggle > span { display: flex; align-items: center; gap: 12px; }
+.header-menu-index { background: #e6edf5; color: #465970; border-radius: 7px; min-width: 28px; padding: 4px; text-align: center; font-size: 11px; }
+.header-menu-toggle[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.header-menu-fields[hidden] { display: none; }
+.header-savebar { position: sticky; top: 96px; z-index: 20; background: #f6f8fc; box-shadow: 0 4px 12px #17283f0a; }
+@media (max-width: 767px) { .header-savebar { top: 80px; } }
