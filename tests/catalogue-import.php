@@ -26,3 +26,15 @@ foreach ($manifest['products'] as $p) {
     check(is_file(__DIR__ . '/../public' . $p['image']), 'Product illustration missing.');
 }
 echo "Catalogue merge checks passed: 246 products, 18 categories, preserved data, repeat-safe import.\n";
+$stateWithPhoto = $result['state'];
+$stateWithPhoto['products'][1]['image'] = '/uploads/owner-photo.jpg';
+$stateWithPhoto['products'][1]['imageIsIllustration'] = false;
+$mapping = ['BM-0001' => '/images/products/BM-0001.jpg'];
+check(updateIdoCatalogueImages($stateWithPhoto, $mapping, __DIR__ . '/../public')['state'] === $stateWithPhoto, 'Owner photo overwritten.');
+if (is_file(__DIR__ . '/../public/images/products/BM-0001.jpg')) {
+    $images = updateIdoCatalogueImages($result['state'], $mapping, __DIR__ . '/../public');
+    check($images['imagesUpdated'] === 1, 'Placeholder was not replaced.');
+    check($images['state']['products'][1]['image'] === $mapping['BM-0001'], 'Wrong product image.');
+    check(updateIdoCatalogueImages($images['state'], $mapping, __DIR__ . '/../public')['imagesUpdated'] === 0, 'Image update not repeat-safe.');
+}
+echo "Generated image update checks passed: owner photos preserved and placeholder updates are repeat-safe.\n";

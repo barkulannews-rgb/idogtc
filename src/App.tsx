@@ -11,6 +11,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { Product } from './types/store';
 import { I18N } from './data/i18n';
 import { productPrice, quoteLabel } from './utils/productPrice';
+import { ProductPrice } from './components/ProductPrice';
 import { getHeaderSettings, headerText, headerWhatsApp } from './data/headerSettings';
 import { api, DATABASE_MODE, reportApiError } from './utils/api';
 import { DatabaseStoreProvider } from './context/DatabaseStoreProvider';
@@ -907,7 +908,7 @@ function Storefront() {
 
                       <div className="pt-1.5 sm:pt-2">
                         <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                          <span className="text-xs sm:text-base font-bold text-[#3D464D]">{displayPrice(p)}</span>
+                          <span className="text-xs sm:text-base font-bold text-[#3D464D]"><ProductPrice product={p} company={companySettings} language={language} format={formatPrice} quantity={1} /></span>
                           <span className="text-[10px] sm:text-xs text-[#6C757D] line-through font-normal">{!p.priceOnRequest && formatOldPrice(p.oldPrice)}</span>
                         </div>
 
@@ -1063,7 +1064,7 @@ function Storefront() {
 
                     <div className="pt-1.5 sm:pt-2">
                       <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                        <span className="text-xs sm:text-base font-bold text-[#3D464D]">{displayPrice(p)}</span>
+                        <span className="text-xs sm:text-base font-bold text-[#3D464D]"><ProductPrice product={p} company={companySettings} language={language} format={formatPrice} quantity={1} /></span>
                         <span className="text-[10px] sm:text-xs text-[#6C757D] line-through font-normal">{!p.priceOnRequest && formatOldPrice(p.oldPrice)}</span>
                       </div>
 
@@ -1463,7 +1464,7 @@ function Storefront() {
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-xs text-[#3D464D] line-clamp-1">{item.product.name}</h4>
-                        <span className="text-xs font-mono font-bold text-[#D97706]">{displayPrice(item.product)}</span>
+                        <span className="text-xs font-mono font-bold text-[#D97706]"><ProductPrice product={item.product} company={companySettings} language={language} format={formatPrice} quantity={item.quantity} /></span>
                         <div className="flex items-center gap-2 mt-1">
                           <button
                             onClick={() => updateCartQuantity(item.product.id, -1)}
@@ -1497,7 +1498,7 @@ function Storefront() {
               <div className="border-t border-[#E5E5E5] pt-4 space-y-3 mt-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-[#6C757D]">{t.estimatedTotal}:</span>
-                  <span className="text-lg font-bold font-mono text-[#3D464D]">{hasQuoteItems ? quoteLabel(language) : formatPrice(cartTotal)}</span>
+                  <span className="text-lg font-bold font-mono text-[#3D464D]">{hasQuoteItems ? <button type="button" onClick={sendWhatsAppOrder} className="text-[#166534] underline underline-offset-2 hover:text-green-800">{quoteLabel(language)}</button> : formatPrice(cartTotal)}</span>
                 </div>
                 <button
                   onClick={sendWhatsAppOrder}
@@ -1580,7 +1581,7 @@ function Storefront() {
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-xs text-[#3D464D] line-clamp-1">{p.name}</h4>
-                      <span className="text-xs font-mono font-bold text-[#D97706]">{displayPrice(p)}</span>
+                      <span className="text-xs font-mono font-bold text-[#D97706]"><ProductPrice product={p} company={companySettings} language={language} format={formatPrice} quantity={1} /></span>
                       <p className="text-[10px] text-[#6C757D] truncate">{p.category}</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -1640,7 +1641,7 @@ function Storefront() {
                 <h3 className="font-bold text-base sm:text-lg text-[#3D464D] uppercase">{selectedProduct.name}</h3>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-lg sm:text-xl font-bold text-[#3D464D]">{displayPrice(selectedProduct)}</span>
+                  <span className="text-lg sm:text-xl font-bold text-[#3D464D]"><ProductPrice product={selectedProduct} company={companySettings} language={language} format={formatPrice} quantity={modalQuantity} /></span>
                   <span className="text-xs text-[#6C757D] line-through font-normal">{!selectedProduct.priceOnRequest && formatOldPrice(selectedProduct.oldPrice)}</span>
                 </div>
 

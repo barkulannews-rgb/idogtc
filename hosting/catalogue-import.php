@@ -38,6 +38,25 @@ function mergeIdoCatalogue(array $state, array $catalogue): array {
     return ['state' => $state, 'added' => $added, 'skipped' => $skipped, 'categoriesAdded' => $categoriesAdded];
 }
 
+function updateIdoCatalogueImages(array $state, array $images, ?string $documentRoot = null): array {
+    $documentRoot = $documentRoot ?? dirname(__DIR__);
+    $updated = 0;
+    foreach ($state['products'] as &$product) {
+        $sku = $product['sku'] ?? '';
+        if (!isset($images[$sku])) continue;
+        $source = $product['image'] ?? '';
+        // Keep actual product images and any owner-selected replacements intact.
+        if (empty($product['imageIsIllustration']) || !preg_match('#^/images/catalogue/excel-(bm|pt)-\d+\.svg$#', $source)) continue;
+        $image = $images[$sku];
+        if (!is_string($image) || !preg_match('#^/images/products/(BM|PT)-\d{4}\.jpg$#', $image) || !is_file($documentRoot . $image)) throw new RuntimeException('Generated product image missing.');
+        $product['image'] = $image;
+        $product['imageIsIllustration'] = true;
+        $updated++;
+    }
+    unset($product);
+    return ['state' => $state, 'added' => 0, 'skipped' => 246, 'categoriesAdded' => 0, 'imagesUpdated' => $updated];
+}
+
 // Only the deployment runner installs this file, with a short-lived random token hash.
 if (!defined('IDO_IMPORT_TOKEN_HASH')) return;
 ini_set('display_errors', '0');
@@ -55,9 +74,12 @@ try {
     $row = $db->query('SELECT revision, payload FROM ido_store WHERE id = 1 FOR UPDATE')->fetch();
     if (!$row) throw new RuntimeException('The existing store was not found.');
     $state = json_decode($row['payload'], true, 512, JSON_THROW_ON_ERROR);
-    $result = mergeIdoCatalogue($state, $catalogue);
+    $result = defined('IDO_CATALOGUE_IMAGE_DATA')
+        ? updateIdoCatalogueImages($state, json_decode(base64_decode(IDO_CATALOGUE_IMAGE_DATA, true), true, 512, JSON_THROW_ON_ERROR))
+        : mergeIdoCatalogue($state, $catalogue);
+    $changed = $result['added'] > 0 || ($result['imagesUpdated'] ?? 0) > 0;
     $revision = (int)$row['revision'];
-    if ($result['added'] > 0) {
+    if ($changed) {
         // A private pre-import snapshot is written outside public_html before the database changes.
         $directory = $home . '/idogtc-catalogue-backups';
         if (!is_dir($directory) && !mkdir($directory, 0700)) throw new RuntimeException('Cannot create private import backup.');
@@ -73,7 +95,7 @@ try {
         $db->prepare('UPDATE ido_store SET payload = ?, revision = ? WHERE id = 1')->execute([json_encode($result['state'], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), $revision]);
     }
     $db->commit();
-    echo json_encode(['added' => $result['added'], 'skipped' => $result['skipped'], 'categoriesAdded' => $result['categoriesAdded'], 'revision' => $revision, 'backupCreated' => $result['added'] > 0, 'totalProducts' => count($result['state']['products'])]);
+    echo json_encode(['added' => $result['added'], 'skipped' => $result['skipped'], 'categoriesAdded' => $result['categoriesAdded'], 'imagesUpdated' => $result['imagesUpdated'] ?? 0, 'revision' => $revision, 'backupCreated' => $changed, 'totalProducts' => count($result['state']['products'])]);
 } catch (Throwable $error) {
     if (isset($db) && $db->inTransaction()) $db->rollBack();
     error_log('IDO catalogue import: ' . $error->getMessage());

@@ -10,7 +10,15 @@ const data = fs.readFileSync('catalogue/idogtc-catalogue-2026-11.json');
 const manifest = JSON.parse(data);
 if (manifest.products.length !== 246 || new Set(manifest.products.map(p => p.sku)).size !== 246) throw new Error('Catalogue item codes are invalid.');
 const token = randomBytes(32).toString('hex');
-const code = `define('IDO_IMPORT_TOKEN_HASH', '${createHash('sha256').update(token).digest('hex')}');\ndefine('IDO_IMPORT_EXPIRES', ${Math.floor(Date.now() / 1000) + 900});\ndefine('IDO_CATALOGUE_DATA', '${data.toString('base64')}');`;
+let code = `define('IDO_IMPORT_TOKEN_HASH', '${createHash('sha256').update(token).digest('hex')}');\ndefine('IDO_IMPORT_EXPIRES', ${Math.floor(Date.now() / 1000) + 900});\ndefine('IDO_CATALOGUE_DATA', '${data.toString('base64')}');`;
+if (process.env.IDO_CATALOGUE_IMAGES === 'true') {
+  const images = fs.readFileSync('catalogue/product-images.json');
+  const mapping = JSON.parse(images);
+  for (const [sku, image] of Object.entries(mapping)) {
+    if (!manifest.products.some(product => product.sku === sku) || image !== `/images/products/${sku}.jpg`) throw new Error('Invalid generated image map.');
+  }
+  code += `\ndefine('IDO_CATALOGUE_IMAGE_DATA', '${images.toString('base64')}');`;
+}
 const php = fs.readFileSync('hosting/catalogue-import.php', 'utf8').replace('/* IDO_CATALOGUE_CONFIG */', code);
 const remote = `api/catalogue-import-${randomUUID()}.php`;
 const client = new Client(30000);

@@ -64,6 +64,12 @@ test('all catalogue pages are reachable and quote-only products retain their ite
   await expect(page.locator('#recent')).toContainText('1 products');
   await expect(page.locator('#recent')).toContainText('Steel Scaffolding');
   await expect(page.locator('#recent')).toContainText('Request quote');
+  const quoteLink = page.locator('#recent').getByRole('link', { name: 'Request quote: Steel Scaffolding BM-0141', exact: true });
+  await expect(quoteLink).toHaveAttribute('target', '_blank');
+  const quoteAddress = new URL((await quoteLink.getAttribute('href'))!);
+  expect(quoteAddress.hostname).toBe('wa.me');
+  expect(quoteAddress.searchParams.get('text')).toContain('Steel Scaffolding [BM-0141]');
+  expect(quoteAddress.searchParams.get('text')).toContain('Quantity: 1 Set');
   await expect(page.locator('#recent')).not.toContainText('$0.00');
   await expect(page.locator('#recent .product-item')).toHaveCount(1);
   await page.locator('#recent h3').click();
