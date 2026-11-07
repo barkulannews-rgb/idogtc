@@ -1,0 +1,68 @@
+name: Build and deploy IDO website
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview file changes without uploading them
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: node --test tests/deploy.test.mjs
+      - run: npm run build:hosting
+      - name: Save hosting build
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosting-build
+          path: release/public_html/
+          include-hidden-files: true
+          retention-days: 7
+
+  deploy:
+    needs: build
+    # No hosting connection is attempted until the owner enables this variable.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://idogtc.com
+    concurrency:
+      group: idogtc-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: hosting-build
+          path: release/public_html
+      - name: Upload application files with SSH
+        env:
+          IDO_SSH_HOST: ${{ secrets.SOSTEK_SSH_HOST }}
+          IDO_SSH_USER: ${{ secrets.SOSTEK_SSH_USER }}
+          IDO_SSH_PORT: ${{ secrets.SOSTEK_SSH_PORT }}
+          IDO_SSH_PRIVATE_KEY: ${{ secrets.SOSTEK_SSH_PRIVATE_KEY }}
+          IDO_SSH_KNOWN_HOSTS: ${{ secrets.SOSTEK_SSH_KNOWN_HOSTS }}
+          IDO_DEPLOY_PATH: ${{ vars.SOSTEK_DEPLOY_PATH }}
+          IDO_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        run: node scripts/deploy-hosting.mjs

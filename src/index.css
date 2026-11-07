@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #6C757D;
+    background-color: #F5F5F5;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
+    color: #3D464D;
+  }
+}
+
+/* MultiShop Exact Section Title Accent Border */
+.section-title {
+  position: relative;
+  text-transform: uppercase;
+  margin-bottom: 25px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.section-title::after {
+  position: absolute;
+  content: "";
+  width: 100%;
+  height: 1px;
+  top: 50%;
+  left: 0;
+  border-top: 1px dashed rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+.section-title span {
+  position: relative;
+  background-color: #F5F5F5;
+  padding-right: 15px;
+  z-index: 2;
+  color: #3D464D;
+}
+
+/* MultiShop Signature Yellow & Dark Colors */
+.bg-primary-yellow {
+  background-color: #FFD333 !important;
+}
+
+.text-primary-yellow {
+  color: #FFD333 !important;
+}
+
+.bg-dark-gray {
+  background-color: #3D464D !important;
+}
+
+/* MultiShop Product Card Action Hover Effect */
+.product-item {
+  transition: .4s ease;
+}
+
+.product-item:hover {
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.product-item .product-action {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(61, 70, 77, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: .4s ease;
+  opacity: 0;
+  z-index: 10;
+}
+
+.product-item:hover .product-action {
+  opacity: 1;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #FFD333;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #e5be2c;
+}

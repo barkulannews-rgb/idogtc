@@ -1,0 +1,6 @@
+{
+  "name": "IDO General Trading Company",
+  "description": "Official landing portal for IDO General Trading Company - Global sourcing, imports & distribution in Bosaso, Somalia and Dubai, UAE.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
