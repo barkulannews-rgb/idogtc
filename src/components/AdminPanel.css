@@ -1,0 +1,73 @@
+/* Scoped admin palette keeps the storefront's visual identity independent. */
+.ido-admin { background: #f3f5f9; color: #23344a; --admin-ink: #23344a; }
+.ido-admin [class~="bg-[#1E293B]"] { background-color: white; box-shadow: 0 4px 22px #172b4510; }
+.ido-admin [class~="bg-[#0F172A]"] { background-color: #f6f8fc; }
+.ido-admin [class~="bg-[#334155]"] { background-color: #e9eef5; }
+.ido-admin [class~="border-[#334155]"], .ido-admin [class~="border-[#475569]"] { border-color: #dce3ed; }
+.ido-admin [class~="text-white"], .ido-admin [class~="text-[#CBD5E1]"] { color: #23344a; }
+.ido-admin [class~="text-[#94A3B8]"], .ido-admin .text-slate-400 { color: #66768b; }
+.ido-admin [class~="text-[#FFD333]"] { color: #977000; }
+.ido-admin .text-emerald-400 { color: #08795c; }
+.ido-admin .text-sky-400 { color: #176d9c; }
+.ido-admin .text-amber-400 { color: #966300; }
+.ido-admin h2 { text-transform: none; letter-spacing: -.035em; font-size: clamp(1.4rem, 2.5vw, 1.9rem); }
+.ido-admin h3 { text-transform: none; }
+.ido-admin button, .ido-admin input, .ido-admin select, .ido-admin textarea { transition: background-color .18s, box-shadow .18s, border-color .18s; }
+.ido-admin button { min-height: 36px; }
+.ido-admin button:focus-visible, .ido-admin a:focus-visible { outline: 3px solid #bd920c; outline-offset: 3px; }
+.ido-admin input:focus, .ido-admin select:focus, .ido-admin textarea:focus { border-color: #ba941c; box-shadow: 0 0 0 3px #ffd33326; }
+.ido-admin input, .ido-admin select, .ido-admin textarea { min-width: 0; }
+.ido-admin [class~="hover:bg-[#475569]"]:hover { background-color: #dae3ef; }
+.ido-admin [class~="hover:bg-[#334155]"]:hover { background-color: #edf1f7; }
+.ido-admin [class~="bg-[#FFD333]"] { box-shadow: 0 3px 9px #d8aa1825; }
+.admin-topbar { min-height: 80px; box-shadow: 0 2px 15px #172b4508 !important; }
+.admin-topbar > div, .admin-layout { max-width: 1480px; }
+.admin-topbar button { text-transform: none; letter-spacing: 0; }
+.admin-content { min-width: 0; padding-bottom: 40px; }
+.admin-sidebar { align-self: start; padding: 16px 12px; border-radius: 20px; background: #17283f; }
+.admin-nav-caption { color: #93a7c0; font-size: 10px; font-weight: 700; letter-spacing: .2em; padding: 6px 16px 14px; }
+.ido-admin .admin-sidebar > div:not(.admin-nav-caption) { background: transparent; border-color: #ffffff14; box-shadow: none; }
+.ido-admin .admin-sidebar button { text-transform: none; font-size: 13px; min-height: 43px; letter-spacing: 0; }
+.ido-admin .admin-sidebar button:not([class~="bg-[#FFD333]"]) { color: #d6e0ef; }
+.ido-admin .admin-sidebar button:not([class~="bg-[#FFD333]"]):hover { background: #ffffff0d; }
+.ido-admin .admin-sidebar [class~="text-[#94A3B8]"] { color: #aabbd0; }
+.ido-admin .admin-sidebar [class~="text-[#FFD333]"] { color: #ffd333; }
+.admin-welcome { padding: 30px; border-radius: 20px; background: linear-gradient(115deg, #17283f, #28465c); position: relative; overflow: hidden; }
+.ido-admin .admin-welcome h2 { color: white; margin-top: 8px; }
+.ido-admin .admin-welcome p { color: #c0cedc; margin-top: 8px; font-size: 13px; max-width: 460px; line-height: 1.7; }
+.admin-eyebrow { color: #ffd333; font-size: 10px; letter-spacing: .18em; font-weight: 700; }
+.admin-metrics > div { position: relative; border-radius: 16px; padding: 22px 18px; overflow: hidden; }
+.admin-metrics p { font-size: 34px; letter-spacing: -.04em; margin: 12px 0 4px; }
+.admin-metric-icon { width: 34px; height: 34px; padding: 8px; border-radius: 10px; background: #fff4c8; color: #8d6b00; margin-bottom: 18px; }
+.admin-metrics > div:nth-child(2) .admin-metric-icon { background: #e9e7ff; color: #6553b9; }
+.admin-metrics > div:nth-child(3) .admin-metric-icon { background: #def4eb; color: #16765a; }
+.admin-metrics > div:nth-child(4) .admin-metric-icon { background: #e2efff; color: #3477b7; }
+.admin-shortcuts > div { border-radius: 16px; padding: 24px; }
+.admin-shortcuts p { min-height: 56px; line-height: 1.8; }
+.ido-admin table { font-size: 13px; }
+.ido-admin thead { background: #edf2f8; }
+.ido-admin th { color: #64758a; font-size: 10px; letter-spacing: .06em; padding-top: 16px; padding-bottom: 16px; }
+.ido-admin tbody tr { border-color: #e7edf4; }
+.ido-admin tbody tr:hover { background: #f7f9fc; }
+.ido-admin [class~="bg-[#0F172A]/80"] { background-color: #102039aa; backdrop-filter: blur(5px); }
+.ido-admin [class~="bg-rose-950/40"] { background: #fff1f2; color: #b83246; border-color: #f4d2d9; }
+.ido-admin-login { background: radial-gradient(ellipse at 20% 0%, #345068, transparent 60%), #102035; }
+.ido-admin-login > div:last-child { border-radius: 24px; padding: 36px; box-shadow: 0 30px 100px #0004; }
+@media (min-width: 768px) { .admin-sidebar { position: sticky; top: 104px; } }
+@media (max-width: 767px) {
+  .admin-topbar { min-height: 72px; }
+  .admin-topbar > div { gap: 8px; }
+  .admin-topbar [class~="text-base"] { font-size: 13px; }
+  .admin-topbar [class~="text-[10px]"] { display: none; }
+  .admin-layout { gap: 20px; }
+  .admin-sidebar { padding: 8px; border-radius: 14px; }
+  .admin-nav-caption { display: none; }
+  .ido-admin .admin-sidebar > div:nth-child(2) { display: flex; overflow-x: auto; gap: 6px; padding: 4px; }
+  .ido-admin .admin-sidebar > div:nth-child(2) > button { width: auto; flex-shrink: 0; white-space: nowrap; }
+  .ido-admin .admin-sidebar > div:nth-child(3) { margin-top: 8px; padding: 12px; }
+  .admin-welcome { padding: 24px; }
+  .admin-metrics { gap: 12px; }
+  .admin-metrics > div { padding: 18px 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .ido-admin *, .ido-admin *::before, .ido-admin *::after { animation: none !important; transition: none !important; } }
+.ido-admin .admin-sidebar [class~="text-[#CBD5E1]"] { color: #c5d3e5; }

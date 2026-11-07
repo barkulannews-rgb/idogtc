@@ -15,6 +15,7 @@ import { ImagePickerField } from './ImagePickerField';
 import { processImageFile } from '../utils/imageUpload';
 import { HeaderEditor } from './HeaderEditor';
 import { getHeaderSettings } from '../data/headerSettings';
+import './AdminPanel.css';
 
 interface AdminPanelProps {
   onBackToStore: () => void;
@@ -425,7 +426,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
   // If not authenticated, show secure login
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] flex flex-col justify-center items-center p-4">
+      <div className="ido-admin ido-admin-login min-h-screen bg-[#0F172A] text-[#F8FAFC] flex flex-col justify-center items-center p-4">
         
         {/* Language selector on Login page */}
         <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-[#1E293B] border border-[#334155] px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm">
@@ -545,7 +546,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
   });
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] flex flex-col">
+    <div className="ido-admin min-h-screen bg-[#0F172A] text-[#F8FAFC] flex flex-col">
       
       {/* Toast message */}
       {adminToast && (
@@ -556,7 +557,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
       )}
 
       {/* Top Admin Header with Language Toggle */}
-      <header className="bg-[#1E293B] border-b border-[#334155] sticky top-0 z-40 px-4 py-3">
+      <header className="admin-topbar bg-[#1E293B] border-b border-[#334155] sticky top-0 z-40 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           <div className="flex items-center gap-3">
@@ -570,7 +571,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                   {t.adminControlPanel}
                 </span>
               </div>
-              <span className="text-[10px] text-[#94A3B8] font-mono hidden sm:inline">idogtc.com • Central Control Hub</span>
+              <span className="text-[10px] text-[#94A3B8] font-mono hidden sm:inline">idogtc.com / Business workspace</span>
             </div>
           </div>
 
@@ -616,10 +617,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
       </header>
 
       {/* Main Admin Body with Sidebar */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="admin-layout flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
         
         {/* Navigation Sidebar */}
-        <aside className="md:col-span-3 space-y-2">
+        <aside className="admin-sidebar md:col-span-3 space-y-2">
+          <div className="admin-nav-caption">{language === 'en' ? 'WORKSPACE' : 'MAAMULKA'}</div>
           <div className="bg-[#1E293B] border border-[#334155] rounded-xl p-3 space-y-1 shadow-sm">
             
             <button 
@@ -740,15 +742,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
         </aside>
 
         {/* Dynamic Content Panel */}
-        <main className="md:col-span-9 space-y-6">
+        <main className="admin-content md:col-span-9 space-y-6">
           
           {/* TAB 1: DASHBOARD OVERVIEW */}
           {activeTab === 'header' && <HeaderEditor />}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="admin-welcome flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
+                  <span className="admin-eyebrow">IDO GENERAL TRADING COMPANY</span>
                   <h2 className="text-2xl font-extrabold uppercase text-white">{t.dashboardOverview}</h2>
                   <p className="text-xs text-[#94A3B8]">{t.dashboardDesc}</p>
                 </div>
@@ -762,26 +765,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
               </div>
 
               {/* Metric Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="admin-metrics grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-[#1E293B] border border-[#334155] rounded-xl p-4">
+                  <Package className="admin-metric-icon" aria-hidden="true" />
                   <span className="text-[10px] uppercase font-bold text-[#94A3B8]">{t.totalProducts}</span>
                   <p className="text-3xl font-extrabold text-white mt-1">{products.length}</p>
                   <span className="text-[10px] text-emerald-400 font-medium">{t.activeItems}</span>
                 </div>
 
                 <div className="bg-[#1E293B] border border-[#334155] rounded-xl p-4">
+                  <Layers className="admin-metric-icon" aria-hidden="true" />
                   <span className="text-[10px] uppercase font-bold text-[#94A3B8]">{t.categoriesTitle}</span>
                   <p className="text-3xl font-extrabold text-white mt-1">{categories.length}</p>
                   <span className="text-[10px] text-[#FFD333] font-medium">{t.categoriesCount}</span>
                 </div>
 
                 <div className="bg-[#1E293B] border border-[#334155] rounded-xl p-4">
+                  <ShoppingBag className="admin-metric-icon" aria-hidden="true" />
                   <span className="text-[10px] uppercase font-bold text-[#94A3B8]">{t.cartInquiries}</span>
                   <p className="text-3xl font-extrabold text-white mt-1">{orders.length}</p>
                   <span className="text-[10px] text-sky-400 font-medium">WhatsApp Orders</span>
                 </div>
 
                 <div className="bg-[#1E293B] border border-[#334155] rounded-xl p-4">
+                  <Sliders className="admin-metric-icon" aria-hidden="true" />
                   <span className="text-[10px] uppercase font-bold text-[#94A3B8]">{t.heroSlides}</span>
                   <p className="text-3xl font-extrabold text-white mt-1">{slides.length}</p>
                   <span className="text-[10px] text-amber-400 font-medium">Rotating Banners</span>
@@ -789,7 +796,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
               </div>
 
               {/* Quick Jump Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="admin-shortcuts grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-[#1E293B] border border-[#334155] rounded-xl p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-sm text-white uppercase flex items-center gap-2">
@@ -831,8 +838,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                   </div>
                   <p className="text-xs text-[#94A3B8] leading-relaxed">
                     {language === 'en'
-                      ? 'Configure Somalia HQ phone (+252 90 512 4444), Dubai hub phone (+971 50 150 7332), or physical warehouse addresses.'
-                      : 'Beddel lambarka Boosaaso (+252 90 512 4444), lambarka Dubai (+971 50 150 7332), ama cinwaanka xafiisyada.'}
+                      ? 'Manage company details, office contacts and warehouse addresses in one place.'
+                      : 'Maamul xogta shirkadda, taleefannada xafiisyada iyo cinwaannada bakhaarada.'}
                   </p>
                   <button 
                     onClick={() => setActiveTab('settings')}
