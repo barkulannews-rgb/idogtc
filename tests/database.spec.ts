@@ -224,3 +224,30 @@ test('header tabs support keyboard, mobile layout and validation in another sect
   await expect(page.getByRole('tabpanel')).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
+
+test('category browser searches all departments and products, clears empty results and filters the catalogue', async ({ page, context }) => {
+  await database(true).connect(context);
+  await page.goto('/');
+  const section = page.locator('#categories');
+  const cards = section.locator('img');
+  await expect(cards).toHaveCount(6);
+  const search = section.getByRole('searchbox', { name: 'Search categories', exact: true });
+  await search.fill('PT-0098');
+  await expect(cards).toHaveCount(1);
+  await expect(section).toContainText('Paint Accessories & Application Tools');
+  await section.getByRole('button', { name: /Paint Accessories & Application Tools/ }).click();
+  await expect(page.locator('#recent')).toContainText('Paint Accessories & Application Tools');
+  await search.fill('does-not-exist');
+  await expect(section.getByText('No matching categories', { exact: true })).toBeVisible();
+  await section.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await expect(cards).toHaveCount(6);
+  await section.getByRole('button', { name: 'Building Materials', exact: true }).click();
+  await expect(cards).toHaveCount(10);
+  await section.getByRole('button', { name: 'Paints & Coatings', exact: true }).click();
+  await expect(cards).toHaveCount(8);
+  await section.getByRole('button', { name: 'All categories', exact: true }).click();
+  await section.getByRole('button', { name: /View all categories/ }).click();
+  await expect(cards).toHaveCount(24);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});

@@ -12,7 +12,7 @@ import { Product } from './types/store';
 import { I18N } from './data/i18n';
 import { productPrice, quoteLabel } from './utils/productPrice';
 import { ProductPrice } from './components/ProductPrice';
-import { categoryImage } from './utils/categoryImage';
+import { CategoryBrowser } from './components/CategoryBrowser';
 import { getHeaderSettings, headerText, headerWhatsApp } from './data/headerSettings';
 import { api, DATABASE_MODE, reportApiError } from './utils/api';
 import { DatabaseStoreProvider } from './context/DatabaseStoreProvider';
@@ -60,7 +60,6 @@ function Storefront() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cataloguePage, setCataloguePage] = useState(1);
   const [catalogueGroup, setCatalogueGroup] = useState('All');
-  const [expandedCategories, setExpandedCategories] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -788,35 +787,11 @@ function Storefront() {
             6. CATEGORIES SECTION (Live Data from StoreContext)
         ======================================================== */}
         <section id="categories" className="max-w-7xl mx-auto px-3 sm:px-4 pt-8 sm:pt-12 pb-4 sm:pb-6 scroll-mt-20">
-          <h2 className="section-title text-lg sm:text-2xl text-[#3D464D]">
-            <span>{t.categoriesTitle}</span>
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-            {(expandedCategories ? categoryCards : categoryCards.slice(0, 6)).map(cat => (
-              <div
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(cat.name); setCatalogueGroup('All');
-                  scrollToSection('featured');
-                  showToast(`${language === 'en' ? 'Filtered by' : 'Lagu shaandheeyay'} ${cat.name}`);
-                }}
-                className={`bg-white p-2.5 sm:p-3 flex items-center gap-3 sm:gap-4 shadow-sm border transition-all cursor-pointer group rounded-sm ${selectedCategory === cat.name ? 'border-[#FFD333] bg-[#FFFBEB]' : 'border-[#E5E5E5] hover:shadow-md hover:border-[#FFD333]'}`}
-              >
-                <div className="w-16 h-16 sm:w-24 sm:h-24 bg-[#F5F5F5] rounded overflow-hidden shrink-0 relative">
-                  <img src={categoryImage(cat, products)} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-xs sm:text-sm text-[#3D464D] group-hover:text-[#D97706] transition-colors uppercase leading-snug truncate">
-                    {cat.name}
-                  </h3>
-                  <span className="text-[11px] sm:text-xs text-[#6C757D] mt-0.5 sm:mt-1 block font-normal">{products.filter(p => p.category === cat.name).length} {language === 'en' ? 'Products' : 'Alaab'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-                  {categories.length > 6 && <button onClick={() => setExpandedCategories(value => !value)} className="mt-4 bg-[#FFD333] text-[#3D464D] px-4 py-2 rounded text-xs font-bold">{expandedCategories ? (language === 'en' ? 'Show fewer categories' : 'Yaree qaybaha') : (language === 'en' ? 'View all categories' : 'Eeg dhammaan qaybaha')} ({categories.length})</button>}
+          <CategoryBrowser categories={categoryCards} products={products} language={language} selected={selectedCategory} onSelect={name => {
+            setSelectedCategory(name); setCatalogueGroup('All'); setSearchQuery('');
+            scrollToSection('featured');
+            showToast((language === 'en' ? 'Filtered by ' : 'Lagu shaandheeyay ') + name);
+          }} />
         </section>
 
         {/* ========================================================
