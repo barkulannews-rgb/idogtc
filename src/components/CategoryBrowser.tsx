@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { ArrowRight, Search, X } from 'lucide-react';
 import type { CategoryItem, Product } from '../types/store';
 import { categoryImage } from '../utils/categoryImage';
+import { categoryUrl } from '../utils/categoryUrl';
 
-export function CategoryBrowser({ categories, products, language, selected, onSelect }: {
-  categories: CategoryItem[]; products: Product[]; language: 'en' | 'so'; selected: string; onSelect: (name: string) => void;
+export function CategoryBrowser({ categories, products, language, selected }: {
+  categories: CategoryItem[]; products: Product[]; language: 'en' | 'so'; selected: string;
 }) {
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState('All');
@@ -36,14 +37,14 @@ export function CategoryBrowser({ categories, products, language, selected, onSe
     </div>
     <div role="status" className="mt-4 mb-3 text-xs text-slate-500">{visible.length} / {filtered.length} {language === 'en' ? 'categories' : 'qaybood'}</div>
     {visible.length ? <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-      {visible.map(category => <button type="button" key={category.id} onClick={() => onSelect(category.name)} aria-pressed={selected === category.name} className={`group flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 ${selected === category.name ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:border-amber-500 hover:bg-amber-50/40'}`}>
+      {visible.map(category => <a key={category.id} href={categoryUrl(category.id)} aria-current={selected === category.name ? 'page' : undefined} className={`group flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 ${selected === category.name ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:border-amber-500 hover:bg-amber-50/40'}`}>
         <img src={categoryImage(category, products)} alt={category.name} className="h-24 w-full sm:w-20 sm:h-20 shrink-0 rounded-lg bg-slate-50 object-contain" />
         <span className="min-w-0 flex-1">
           <span className="block text-xs sm:text-sm font-bold leading-snug text-[#3D464D]">{category.name}</span>
           <span className="mt-2 block text-[11px] text-slate-600">{products.filter(product => product.category === category.name).length} {language === 'en' ? 'products' : 'alaab'}</span>
         </span>
         <ArrowRight size={16} className="hidden sm:block shrink-0 text-slate-400 group-hover:text-amber-700" aria-hidden="true" />
-      </button>)}
+      </a>)}
     </div> : <div className="rounded-xl bg-slate-50 py-8 px-4 text-center">
       <Search size={24} className="mx-auto text-slate-400" aria-hidden="true" />
       <p className="mt-3 text-sm font-semibold text-slate-700">{language === 'en' ? 'No matching categories' : 'Qayb ku habboon lama helin'}</p>

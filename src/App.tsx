@@ -4,7 +4,7 @@ import {
   MapPin, Star, ArrowRight, Truck, RotateCcw,
   Headphones, Facebook, Twitter, Linkedin, Instagram, X, Eye,
   MessageCircle, Menu, Trash2, Plus, Minus, ArrowUp, Globe, Shield,
-  Ship, Sun, Award, Anchor, Package
+  Ship, Sun, Award, Anchor, Package, ArrowLeft
 } from 'lucide-react';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AdminPanel } from './components/AdminPanel';
@@ -13,6 +13,7 @@ import { I18N } from './data/i18n';
 import { productPrice, quoteLabel } from './utils/productPrice';
 import { ProductPrice } from './components/ProductPrice';
 import { CategoryBrowser } from './components/CategoryBrowser';
+import { categoryUrl } from './utils/categoryUrl';
 import { getHeaderSettings, headerText, headerWhatsApp } from './data/headerSettings';
 import { api, DATABASE_MODE, reportApiError } from './utils/api';
 import { DatabaseStoreProvider } from './context/DatabaseStoreProvider';
@@ -44,6 +45,9 @@ function Storefront() {
   const categoryCards = React.useMemo(() => [...categories].sort((a, b) =>
     (categoryShuffle.get(a.id) ?? 1) - (categoryShuffle.get(b.id) ?? 1)), [categories, categoryShuffle]);
   const hasCompanyCatalogue = products.some(product => product.catalogueGroup);
+  const categoryId = new URLSearchParams(window.location.search).get('category');
+  const categoryPage = categoryId !== null;
+  const currentCategory = categories.find(category => category.id === categoryId);
 
   const t = I18N[language];
   const header = getHeaderSettings(companySettings);
@@ -57,7 +61,7 @@ function Storefront() {
   const [showWishlistModal, setShowWishlistModal] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(() => categoryPage ? currentCategory?.name ?? '' : 'All');
   const [cataloguePage, setCataloguePage] = useState(1);
   const [catalogueGroup, setCatalogueGroup] = useState('All');
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
@@ -92,7 +96,7 @@ function Storefront() {
   }, [products]);
 
   useEffect(() => {
-    if (selectedCategory !== 'All' && !categories.some(c => c.name === selectedCategory)) setSelectedCategory('All');
+    if (!categoryPage && selectedCategory !== 'All' && !categories.some(c => c.name === selectedCategory)) setSelectedCategory('All');
   }, [categories, selectedCategory]);
 
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
@@ -140,9 +144,18 @@ function Storefront() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const openCategory = (name: string) => {
+    const category = categories.find(item => item.name === name);
+    window.location.assign(category ? categoryUrl(category.id) : '/#categories');
+  };
+
   // Smooth scroll navigation handler
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
+    if (categoryPage && id !== 'recent') {
+      window.location.assign(`/#${encodeURIComponent(id)}`);
+      return;
+    }
     if (id === 'top') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -154,6 +167,15 @@ function Storefront() {
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
+
+  useEffect(() => {
+    const originalTitle = document.title;
+    if (categoryPage) document.title = `${currentCategory?.name || 'Category not found'} | ${companySettings.name}`;
+    else if (window.location.hash && window.location.hash !== '#admin') {
+      document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
+    }
+    return () => { document.title = originalTitle; };
+  }, [categoryId, currentCategory?.name, companySettings.name]);
 
   useEffect(() => {
     if (slides.length > 0) {
@@ -169,7 +191,7 @@ function Storefront() {
 
   // Filtering products according to category or search query
   const filteredProducts = products.filter(p => {
-    const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+    const matchesCategory = categoryPage ? Boolean(currentCategory && p.category === currentCategory.name) : selectedCategory === 'All' || p.category === selectedCategory;
     const matchesSearch = searchQuery === '' ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -192,7 +214,7 @@ function Storefront() {
   const pageSize = 20;
   const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const safePage = Math.min(cataloguePage, pageCount);
-  const showCatalogue = products.some(product => product.catalogueGroup) || products.length > 20;
+  const showCatalogue = categoryPage || products.some(product => product.catalogueGroup) || products.length > 20;
   const displayRecent = showCatalogue ? filteredProducts.slice((safePage - 1) * pageSize, safePage * pageSize) : legacyRecent;
 
   // Cart operations
@@ -454,7 +476,7 @@ function Storefront() {
               <button
                 onClick={() => {
                   if (searchQuery.trim()) {
-                    scrollToSection('featured');
+                    scrollToSection(categoryPage ? 'recent' : 'featured');
                     showToast(`${t.search}: "${searchQuery}"`);
                   }
                 }}
@@ -538,9 +560,7 @@ function Storefront() {
                     <button
                       key={i}
                       onClick={() => {
-                        setSelectedCategory(c.name); setCatalogueGroup('All');
-                        setCategoryDropdownOpen(false);
-                        scrollToSection('featured');
+                        window.location.assign(categoryUrl(c.id));
                       }}
                       className={`w-full text-left px-5 py-2.5 text-xs font-semibold hover:bg-[#F5F5F5] flex items-center justify-between border-t border-[#F0F0F0] cursor-pointer ${selectedCategory === c.name ? 'text-[#D97706] font-bold bg-[#FFFBEB]' : ''}`}
                     >
@@ -619,6 +639,7 @@ function Storefront() {
 
         </header>
 
+        {!categoryPage && <>
         {/* ========================================================
             4. HERO CAROUSEL & 2 PROMO BANNERS
         ======================================================== */}
@@ -787,11 +808,7 @@ function Storefront() {
             6. CATEGORIES SECTION (Live Data from StoreContext)
         ======================================================== */}
         <section id="categories" className="max-w-7xl mx-auto px-3 sm:px-4 pt-8 sm:pt-12 pb-4 sm:pb-6 scroll-mt-20">
-          <CategoryBrowser categories={categoryCards} products={products} language={language} selected={selectedCategory} onSelect={name => {
-            setSelectedCategory(name); setCatalogueGroup('All'); setSearchQuery('');
-            scrollToSection('featured');
-            showToast((language === 'en' ? 'Filtered by ' : 'Lagu shaandheeyay ') + name);
-          }} />
+          <CategoryBrowser categories={categoryCards} products={products} language={language} selected={selectedCategory} />
         </section>
 
         {/* ========================================================
@@ -969,16 +986,28 @@ function Storefront() {
           </div>
         </div>
 
+        </>}
+
         {/* ========================================================
             9. RECENT PRODUCTS GRID
         ======================================================== */}
         <section id="recent" className="max-w-7xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-4 sm:pb-6 scroll-mt-20">
-          <h2 className="section-title text-lg sm:text-2xl text-[#3D464D]">
+          {categoryPage ? <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 my-4 sm:my-6">
+            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-slate-600 mb-4">
+              <a href="/" className="hover:underline">{language === 'en' ? 'Home' : 'Bogga hore'}</a><span aria-hidden="true">/</span>
+              <a href="/#categories" className="hover:underline">{t.categoriesTitle}</a><span aria-hidden="true">/</span>
+              <span aria-current="page">{currentCategory?.name || (language === 'en' ? 'Category not found' : 'Qaybta lama helin')}</span>
+            </nav>
+            <h1 className="text-xl sm:text-3xl font-extrabold text-[#3D464D]">{currentCategory?.name || (language === 'en' ? 'Category not found' : 'Qaybta lama helin')}</h1>
+            <p className="mt-2 text-sm text-slate-600">{language === 'en' ? 'Browse products in this category and request a quote.' : 'Eeg alaabta qaybtan oo codso qiimaheeda.'}</p>
+            <a href="/#categories" className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-slate-700 hover:underline"><ArrowLeft size={16} />{language === 'en' ? 'Browse categories' : 'Eeg qaybaha kale'}</a>
+          </div> : <h2 className="section-title text-lg sm:text-2xl text-[#3D464D]">
             <span>{showCatalogue ? (language === 'en' ? 'Product Catalogue' : 'Kaatalogga Alaabta') : t.recentTitle}</span>
-          </h2>
+          </h2>}
 
           {showCatalogue && <div className="flex flex-wrap items-center gap-3 mb-4 text-xs">
             <span role="status">{filteredProducts.length} {language === 'en' ? 'products' : 'alaab'}</span>
+            {categoryPage ? <label className="relative flex-1 min-w-0 max-w-md ml-auto"><span className="sr-only">{language === 'en' ? 'Search this category' : 'Ka raadi qaybtan'}</span><input type="search" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder={language === 'en' ? 'Search this category...' : 'Ka raadi qaybtan...'} className="w-full bg-white border border-slate-300 p-3 rounded-lg text-sm" /></label> : <>
             <select aria-label="Catalogue group" value={catalogueGroup} onChange={event => { setCatalogueGroup(event.target.value); setSelectedCategory('All'); }} className="bg-white border border-[#CED4DA] p-2 rounded max-w-full">
               <option value="All">{language === 'en' ? 'All departments' : 'Dhammaan waaxyaha'}</option>
               <option value="Building Materials">Building Materials</option><option value="Paints & Coatings">Paints &amp; Coatings</option>
@@ -986,6 +1015,7 @@ function Storefront() {
             <select aria-label="Catalogue category" value={selectedCategory} onChange={event => setSelectedCategory(event.target.value)} className="bg-white border border-[#CED4DA] p-2 rounded max-w-full">
               <option value="All">{t.allCategories}</option>{categories.filter(category => catalogueGroup === 'All' || category.catalogueGroup === catalogueGroup).map(category => <option key={category.id} value={category.name}>{category.name}</option>)}
             </select>
+            </>}
           </div>}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-4">
             {displayRecent.map((p) => {
@@ -1084,6 +1114,7 @@ function Storefront() {
           </nav>}
         </section>
 
+        {!categoryPage && <>
         {/* ========================================================
             10. VENDOR / PARTNERS BEAUTIFIED STRIP
         ======================================================== */}
@@ -1301,6 +1332,7 @@ function Storefront() {
           </div>
         </section>
 
+        </>}
       </div>
 
       {/* ========================================================
@@ -1322,10 +1354,10 @@ function Storefront() {
           <div className="space-y-2">
             <h5 className="text-white text-uppercase mb-2 sm:mb-4 font-bold text-xs sm:text-sm tracking-wider">{t.quickShop}</h5>
             <ul className="space-y-1 sm:space-y-1.5 text-xs text-[#CBD5E1] font-normal">
-              <li><button onClick={() => { setSelectedCategory('Foodstuffs & Commodities'); scrollToSection('featured'); }} className="hover:text-[#FFD333] cursor-pointer">Foodstuffs & Commodities</button></li>
-              <li><button onClick={() => { setSelectedCategory('Construction Steel & Cement'); scrollToSection('featured'); }} className="hover:text-[#FFD333] cursor-pointer">Steel Rebar & Cement</button></li>
-              <li><button onClick={() => { setSelectedCategory('Electronics & Solar Power'); scrollToSection('featured'); }} className="hover:text-[#FFD333] cursor-pointer">Solar Systems & Batteries</button></li>
-              <li><button onClick={() => { setSelectedCategory('Heavy Machinery & Auto Parts'); scrollToSection('featured'); }} className="hover:text-[#FFD333] cursor-pointer">Heavy Machinery & Spare Parts</button></li>
+              <li><button onClick={() => { openCategory('Foodstuffs & Commodities'); }} className="hover:text-[#FFD333] cursor-pointer">Foodstuffs & Commodities</button></li>
+              <li><button onClick={() => { openCategory('Construction Steel & Cement'); }} className="hover:text-[#FFD333] cursor-pointer">Steel Rebar & Cement</button></li>
+              <li><button onClick={() => { openCategory('Electronics & Solar Power'); }} className="hover:text-[#FFD333] cursor-pointer">Solar Systems & Batteries</button></li>
+              <li><button onClick={() => { openCategory('Heavy Machinery & Auto Parts'); }} className="hover:text-[#FFD333] cursor-pointer">Heavy Machinery & Spare Parts</button></li>
               <li><button onClick={() => { setSelectedCategory('All'); scrollToSection('featured'); }} className="hover:text-[#FFD333] cursor-pointer">{t.showAllProducts}</button></li>
             </ul>
           </div>

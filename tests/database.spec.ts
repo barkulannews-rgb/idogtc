@@ -235,8 +235,24 @@ test('category browser searches all departments and products, clears empty resul
   await search.fill('PT-0098');
   await expect(cards).toHaveCount(1);
   await expect(section).toContainText('Paint Accessories & Application Tools');
-  await section.getByRole('button', { name: /Paint Accessories & Application Tools/ }).click();
-  await expect(page.locator('#recent')).toContainText('Paint Accessories & Application Tools');
+  await section.getByRole('link', { name: /Paint Accessories & Application Tools/ }).click();
+  await expect(page).toHaveURL(/\?category=excel-pt-18$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Paint Accessories & Application Tools', exact: true })).toBeVisible();
+  await expect(page.locator('#featured')).toHaveCount(0);
+  await expect(page.locator('#categories')).toHaveCount(0);
+  await expect(page.locator('#recent')).toContainText('22 products');
+  await page.getByRole('searchbox', { name: 'Search this category', exact: true }).fill('PT-0098');
+  await expect(page.locator('#recent .product-item')).toHaveCount(1);
+  await expect(page.locator('#recent')).toContainText('PT-0098');
+  await expect(page.locator('#recent').getByRole('link', { name: /Request quote/ })).toHaveAttribute('href', /wa\.me/);
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1, name: 'Paint Accessories & Application Tools', exact: true })).toBeVisible();
+  await expect(page.locator('#recent')).toContainText('22 products');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.locator('#recent .product-item')).toHaveCount(2);
+  await expect(page.locator('#recent')).toContainText('PT-0098');
+  await page.goBack();
+  await expect(search).toBeVisible();
   await search.fill('does-not-exist');
   await expect(section.getByText('No matching categories', { exact: true })).toBeVisible();
   await section.getByRole('button', { name: 'Clear filters', exact: true }).click();
@@ -250,4 +266,14 @@ test('category browser searches all departments and products, clears empty resul
   await expect(cards).toHaveCount(24);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+test('an unknown category URL never shows unrelated products', async ({ page, context }) => {
+  await database(true).connect(context);
+  await page.goto('/?category=missing-category');
+  await expect(page.getByRole('heading', { level: 1, name: 'Category not found', exact: true })).toBeVisible();
+  await expect(page.locator('#recent .product-item')).toHaveCount(0);
+  await expect(page.locator('#featured')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Browse categories', exact: true }).click();
+  await expect(page.getByRole('searchbox', { name: 'Search categories', exact: true })).toBeVisible();
 });
