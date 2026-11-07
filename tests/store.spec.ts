@@ -102,7 +102,7 @@ test('storage failures display an error instead of crashing', async ({ page }) =
 test('currency selection updates prices and newsletter saves a validated email', async ({ page }) => {
   await page.goto('/');
   await page.locator('select').selectOption('AED');
-  await expect(page.locator('#featured')).toContainText('AED');
+  await expect(page.locator('#recent')).toContainText('AED');
   await page.locator('input[type="email"]').fill('customer@example.com');
   await page.locator('footer button[type="submit"]').click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem('idogtc_subscribers'))).toBe('["customer@example.com"]');

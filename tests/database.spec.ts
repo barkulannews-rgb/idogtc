@@ -53,7 +53,7 @@ test('all catalogue pages are reachable and quote-only products retain their ite
   await page.goto('/');
   await expect(page.locator('#recent')).toContainText('260 products');
   await expect(page.locator('#recent .product-item').first()).toContainText('BM-0001');
-  await expect(page.locator('#featured')).not.toContainText('Premium Basmati');
+  await expect(page.locator('#featured')).toHaveCount(0);
   await page.getByLabel('Catalogue page', { exact: true }).selectOption('13');
   await expect(page.locator('#recent')).toContainText('PT-0098');
   await expect(page.locator('#recent')).toContainText('Premium Basmati');

@@ -44,7 +44,6 @@ function Storefront() {
   const [categoryShuffle] = useState(() => new Map(storeCategories.map(category => [category.id, Math.random()])));
   const categoryCards = React.useMemo(() => [...categories].sort((a, b) =>
     (categoryShuffle.get(a.id) ?? 1) - (categoryShuffle.get(b.id) ?? 1)), [categories, categoryShuffle]);
-  const hasCompanyCatalogue = products.some(product => product.catalogueGroup);
   const categoryId = new URLSearchParams(window.location.search).get('category');
   const categoryPage = categoryId !== null;
   const currentCategory = categories.find(category => category.id === categoryId);
@@ -151,6 +150,7 @@ function Storefront() {
 
   // Smooth scroll navigation handler
   const scrollToSection = (id: string) => {
+    if (id === 'featured') id = 'recent';
     setMobileMenuOpen(false);
     if (categoryPage && id !== 'recent') {
       window.location.assign(`/#${encodeURIComponent(id)}`);
@@ -200,22 +200,11 @@ function Storefront() {
     return matchesCategory && matchesSearch && (catalogueGroup === 'All' || p.catalogueGroup === catalogueGroup);
   });
 
-  // Featured (4 items) and Recent lists (10 items: 2 rows of 5)
-  const featuredList = filteredProducts.filter(p => p.isFeatured !== false && (!hasCompanyCatalogue || p.catalogueGroup)).slice(0, 4);
-  const nonFeaturedProducts = filteredProducts.filter(p => !featuredList.some(fp => fp.id === p.id));
-  const recentList = nonFeaturedProducts.slice(0, 10);
-
-  // Fallback if lists need padding
-  const displayFeatured = featuredList.length > 0 ? featuredList : filteredProducts.slice(0, 4);
-  const legacyRecent = recentList.length >= 10
-    ? recentList
-    : (filteredProducts.length >= 10 ? filteredProducts.slice(featuredList.length).concat(filteredProducts).slice(0, 10) : filteredProducts);
-
   const pageSize = 20;
   const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const safePage = Math.min(cataloguePage, pageCount);
   const showCatalogue = categoryPage || products.some(product => product.catalogueGroup) || products.length > 20;
-  const displayRecent = showCatalogue ? filteredProducts.slice((safePage - 1) * pageSize, safePage * pageSize) : legacyRecent;
+  const displayRecent = showCatalogue ? filteredProducts.slice((safePage - 1) * pageSize, safePage * pageSize) : filteredProducts.slice(0, 10);
 
   // Cart operations
   const addToCart = (product: Product, quantity = 1) => {
@@ -476,7 +465,7 @@ function Storefront() {
               <button
                 onClick={() => {
                   if (searchQuery.trim()) {
-                    scrollToSection(categoryPage ? 'recent' : 'featured');
+                    scrollToSection('recent');
                     showToast(`${t.search}: "${searchQuery}"`);
                   }
                 }}
@@ -549,7 +538,7 @@ function Storefront() {
                     onClick={() => {
                       setSelectedCategory('All');
                       setCategoryDropdownOpen(false);
-                      scrollToSection('featured');
+                      scrollToSection('recent');
                     }}
                     className={`w-full text-left px-5 py-2.5 text-xs font-semibold hover:bg-[#F5F5F5] flex items-center justify-between cursor-pointer ${selectedCategory === 'All' ? 'text-[#FFD333] font-bold bg-[#F5F5F5]' : ''}`}
                   >
@@ -575,7 +564,7 @@ function Storefront() {
             </>}
                         {/* Desktop Navigation Menu */}
             <nav className="hidden md:flex flex-1 min-w-0 flex-wrap items-center px-4 text-sm font-semibold uppercase tracking-wider gap-x-6 gap-y-0 text-[#E5E5E5]">
-              {header.navigation.filter(link => link.visible).map(link => <button key={link.id} onClick={() => scrollToSection(link.target)} className={link.target === 'top' ? 'text-[#FFD333] py-4 border-b-2 border-[#FFD333] cursor-pointer' : 'py-4 hover:text-[#FFD333] transition-colors cursor-pointer'}>{ht(link.label)}</button>)}
+              {header.navigation.filter(link => link.visible && link.target !== 'featured').map(link => <button key={link.id} onClick={() => scrollToSection(link.target)} className={link.target === 'top' ? 'text-[#FFD333] py-4 border-b-2 border-[#FFD333] cursor-pointer' : 'py-4 hover:text-[#FFD333] transition-colors cursor-pointer'}>{ht(link.label)}</button>)}
             </nav>
 
             {/* Direct WhatsApp Quote Button */}
@@ -598,7 +587,7 @@ function Storefront() {
           {mobileMenuOpen && (
             <div className="md:hidden bg-[#2D343A] border-t border-[#4A5568] px-4 py-3 space-y-2.5 text-xs font-semibold uppercase animate-fadeIn">
               <div className="grid grid-cols-2 gap-2 text-[#E5E5E5]">
-                {header.navigation.filter(link => link.visible).map(link => <button key={link.id} onClick={() => scrollToSection(link.target)} className={link.target === 'top' ? 'text-[#FFD333] p-2 bg-[#3D464D] rounded text-center' : 'hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center'}>{ht(link.label)}</button>)}
+                {header.navigation.filter(link => link.visible && link.target !== 'featured').map(link => <button key={link.id} onClick={() => scrollToSection(link.target)} className={link.target === 'top' ? 'text-[#FFD333] p-2 bg-[#3D464D] rounded text-center' : 'hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center'}>{ht(link.label)}</button>)}
               </div>
 
               {header.visibility.language && <>
@@ -675,7 +664,7 @@ function Storefront() {
 
                   <div className="pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3">
                     <button
-                      onClick={() => scrollToSection('featured')}
+                      onClick={() => scrollToSection('recent')}
                       className="bg-[#FFD333] text-[#3D464D] font-extrabold text-[11px] sm:text-xs uppercase px-4 py-2 sm:px-6 sm:py-3 rounded hover:bg-[#E5BE2C] transition-colors shadow flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>{t.shopNow}</span>
@@ -736,7 +725,7 @@ function Storefront() {
                   <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#FFD333] uppercase">{t.save15Bulk}</span>
                   <h3 className="text-lg sm:text-xl font-bold uppercase">{t.bosasoClearance}</h3>
                   <p className="text-[11px] sm:text-xs text-[#CBD5E1] font-normal">{t.bosasoHq}: {companySettings.bosasoPhone}</p>
-                  <button onClick={() => scrollToSection('featured')} className="inline-block bg-[#FFD333] text-[#3D464D] text-[10px] sm:text-xs font-bold px-3 py-1 sm:px-4 sm:py-1.5 rounded uppercase hover:bg-[#E5BE2C] transition-colors shadow cursor-pointer">
+                  <button onClick={() => scrollToSection('recent')} className="inline-block bg-[#FFD333] text-[#3D464D] text-[10px] sm:text-xs font-bold px-3 py-1 sm:px-4 sm:py-1.5 rounded uppercase hover:bg-[#E5BE2C] transition-colors shadow cursor-pointer">
                     {t.shopNow}
                   </button>
                 </div>
@@ -752,7 +741,7 @@ function Storefront() {
                   <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#FFD333] uppercase">{t.factoryDirect}</span>
                   <h3 className="text-lg sm:text-xl font-bold uppercase">{t.dubaiTradingOffice}</h3>
                   <p className="text-[11px] sm:text-xs text-[#CBD5E1] font-normal">{t.dubaiHub}: {companySettings.dubaiPhone}</p>
-                  <button onClick={() => scrollToSection('featured')} className="inline-block bg-[#FFD333] text-[#3D464D] text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded uppercase hover:bg-[#E5BE2C] transition-colors shadow cursor-pointer">
+                  <button onClick={() => scrollToSection('recent')} className="inline-block bg-[#FFD333] text-[#3D464D] text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded uppercase hover:bg-[#E5BE2C] transition-colors shadow cursor-pointer">
                     {t.shopNow}
                   </button>
                 </div>
@@ -809,136 +798,6 @@ function Storefront() {
         ======================================================== */}
         <section id="categories" className="max-w-7xl mx-auto px-3 sm:px-4 pt-8 sm:pt-12 pb-4 sm:pb-6 scroll-mt-20">
           <CategoryBrowser categories={categoryCards} products={products} language={language} selected={selectedCategory} />
-        </section>
-
-        {/* ========================================================
-            7. FEATURED PRODUCTS (Live Data from StoreContext)
-        ======================================================== */}
-        <section id="featured" className="max-w-7xl mx-auto px-3 sm:px-4 pt-6 sm:pt-10 pb-4 sm:pb-6 scroll-mt-20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
-            <h2 className="section-title text-lg sm:text-2xl text-[#3D464D] flex-1 mb-0">
-              <span>{t.featuredTitle}</span>
-            </h2>
-
-            {/* Active Category Filter & Show All Button */}
-            {(selectedCategory !== 'All' || searchQuery) && (
-              <div className="flex flex-wrap items-center gap-2 mb-4 sm:mb-0">
-                <span className="text-xs text-[#6C757D]">{t.activeFilter}:</span>
-                <span className="text-xs font-bold text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded border border-[#FDE68A]">
-                  {selectedCategory !== 'All' ? selectedCategory : `Search: ${searchQuery}`}
-                </span>
-                <button
-                  onClick={() => { setSelectedCategory('All'); setCatalogueGroup('All'); setSearchQuery(''); showToast(t.showAllProducts); }}
-                  className="text-xs bg-[#FFD333] text-[#3D464D] font-bold px-3 py-1 rounded hover:bg-[#E5BE2C] transition-colors shadow-xs cursor-pointer whitespace-nowrap"
-                >
-                  {t.showAllProducts}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {displayFeatured.length === 0 ? (
-            <div className="bg-white p-8 text-center rounded border border-[#E5E5E5] space-y-3">
-              <p className="text-sm text-[#6C757D]">{t.noProductsFound}</p>
-              <button
-                onClick={() => { setSelectedCategory('All'); setCatalogueGroup('All'); setSearchQuery(''); }}
-                className="bg-[#FFD333] text-[#3D464D] font-bold text-xs uppercase px-4 py-2 rounded shadow hover:bg-[#E5BE2C]"
-              >
-                {t.resetFilter}
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-              {displayFeatured.map((p) => {
-                const inWishlist = isProductInWishlist(p.id);
-                return (
-                  <div
-                    key={p.id}
-                    className="product-item bg-white shadow-sm border border-[#E5E5E5] rounded-sm overflow-hidden flex flex-col justify-between"
-                  >
-                    <div className="relative overflow-hidden aspect-[4/3] bg-[#F5F5F5]">
-                      <img
-                        src={p.image}
-                        alt={p.name}
-                        loading="lazy" className="w-full h-full object-cover transition-transform duration-500"
-                      />
-
-                      {p.imageIsIllustration && <span className="absolute bottom-1 left-1 z-10 bg-white/90 text-[#6C757D] text-[9px] px-1.5 py-0.5 rounded">{language === 'en' ? 'Illustration' : 'Sawir tusaale ah'}</span>}
-
-                      <div className="product-action flex items-center justify-center gap-1.5 sm:gap-2">
-                        <button
-                          onClick={() => addToCart(p, 1)}
-                          className="w-8 h-8 sm:w-10 sm:h-10 bg-white text-[#3D464D] hover:bg-[#FFD333] hover:text-[#3D464D] flex items-center justify-center rounded shadow transition-colors cursor-pointer"
-                          title="Add to Cart"
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        </button>
-                        <button
-                          onClick={() => toggleWishlist(p)}
-                          className={`w-8 h-8 sm:w-10 sm:h-10 bg-white flex items-center justify-center rounded shadow transition-colors cursor-pointer ${inWishlist ? 'text-[#D97706] bg-[#FFFBEB]' : 'text-[#3D464D] hover:bg-[#FFD333] hover:text-[#3D464D]'}`}
-                          title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
-                        >
-                          <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${inWishlist ? 'fill-[#FFD333]' : ''}`} />
-                        </button>
-                        <button
-                          onClick={() => { setSelectedProduct(p); setModalQuantity(1); }}
-                          className="w-8 h-8 sm:w-10 sm:h-10 bg-white text-[#3D464D] hover:bg-[#FFD333] hover:text-[#3D464D] flex items-center justify-center rounded shadow transition-colors cursor-pointer"
-                          title={t.quickView}
-                        >
-                          <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="p-2.5 sm:p-4 text-center space-y-1 sm:space-y-2 flex-1 flex flex-col justify-between">
-                      <div>
-                        <span className="text-[9px] sm:text-[10px] text-[#6C757D] uppercase block font-normal truncate">{p.category}</span>
-                        <h3
-                          onClick={() => { setSelectedProduct(p); setModalQuantity(1); }}
-                          className="font-bold text-xs sm:text-sm text-[#3D464D] hover:text-[#D97706] transition-colors cursor-pointer line-clamp-2 mt-0.5 sm:mt-1 leading-snug"
-                        >
-                          {p.name}
-                        </h3>
-                      {p.sku && <p className="text-[10px] text-[#6C757D] font-mono">{p.sku}{p.unit ? ` | ${p.unit}` : ''}</p>}
-                      </div>
-
-                      <div className="pt-1.5 sm:pt-2">
-                        <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                          <span className="text-xs sm:text-base font-bold text-[#3D464D]"><ProductPrice product={p} company={companySettings} language={language} format={formatPrice} quantity={1} /></span>
-                          <span className="text-[10px] sm:text-xs text-[#6C757D] line-through font-normal">{!p.priceOnRequest && formatOldPrice(p.oldPrice)}</span>
-                        </div>
-
-                        {p.reviews > 0 && (<div className="flex items-center justify-center gap-0.5 mt-0.5 text-[#FFD333]">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className={`w-3 h-3 ${i < p.rating ? 'fill-current' : 'text-[#ced4da]'}`} />
-                          ))}
-                          <span className="text-[9px] sm:text-[10px] text-[#6C757D] ml-0.5 font-normal">({p.reviews})</span>
-                        </div>)}
-
-                        <div className="mt-2 sm:mt-3 flex items-center gap-1.5">
-                          <button
-                            onClick={() => addToCart(p, 1)}
-                            className="flex-1 bg-[#3D464D] text-white hover:bg-[#FFD333] hover:text-[#3D464D] py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold uppercase transition-colors rounded flex items-center justify-center gap-1 shadow cursor-pointer"
-                          >
-                            <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                            <span>{t.addCart}</span>
-                          </button>
-                          <button
-                            onClick={() => toggleWishlist(p)}
-                            className={`p-1.5 sm:p-2 border rounded cursor-pointer transition-colors ${inWishlist ? 'border-[#FFD333] bg-[#FFFBEB] text-[#D97706]' : 'border-[#CED4DA] bg-white text-[#3D464D] hover:border-[#FFD333]'}`}
-                            title={t.wishlist}
-                          >
-                            <Heart className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${inWishlist ? 'fill-[#FFD333]' : ''}`} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </section>
 
         {/* ========================================================
@@ -1358,7 +1217,7 @@ function Storefront() {
               <li><button onClick={() => { openCategory('Construction Steel & Cement'); }} className="hover:text-[#FFD333] cursor-pointer">Steel Rebar & Cement</button></li>
               <li><button onClick={() => { openCategory('Electronics & Solar Power'); }} className="hover:text-[#FFD333] cursor-pointer">Solar Systems & Batteries</button></li>
               <li><button onClick={() => { openCategory('Heavy Machinery & Auto Parts'); }} className="hover:text-[#FFD333] cursor-pointer">Heavy Machinery & Spare Parts</button></li>
-              <li><button onClick={() => { setSelectedCategory('All'); scrollToSection('featured'); }} className="hover:text-[#FFD333] cursor-pointer">{t.showAllProducts}</button></li>
+              <li><button onClick={() => { setSelectedCategory('All'); scrollToSection('recent'); }} className="hover:text-[#FFD333] cursor-pointer">{t.showAllProducts}</button></li>
             </ul>
           </div>
 
@@ -1458,7 +1317,7 @@ function Storefront() {
                   <ShoppingCart className="w-12 h-12 text-[#CED4DA] mx-auto" />
                   <p className="text-sm text-[#6C757D]">{t.cartEmpty}</p>
                   <button
-                    onClick={() => { setShowCartDrawer(false); scrollToSection('featured'); }}
+                    onClick={() => { setShowCartDrawer(false); scrollToSection('recent'); }}
                     className="bg-[#FFD333] text-[#3D464D] font-bold text-xs uppercase px-4 py-2 rounded shadow hover:bg-[#E5BE2C]"
                   >
                     {t.browseGoods}
@@ -1575,7 +1434,7 @@ function Storefront() {
                 <Heart className="w-12 h-12 text-[#CED4DA] mx-auto" />
                 <p className="text-sm text-[#6C757D]">{t.wishlistEmpty}</p>
                 <button
-                  onClick={() => { setShowWishlistModal(false); scrollToSection('featured'); }}
+                  onClick={() => { setShowWishlistModal(false); scrollToSection('recent'); }}
                   className="bg-[#FFD333] text-[#3D464D] font-bold text-xs uppercase px-4 py-2 rounded shadow hover:bg-[#E5BE2C]"
                 >
                   {t.exploreProducts}
