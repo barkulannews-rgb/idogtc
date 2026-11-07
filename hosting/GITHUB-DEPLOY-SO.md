@@ -7,9 +7,39 @@ Repository: https://github.com/barkulannews-rgb/idogtc
 
 Push kasta oo main ah wuxuu hubiyaa TypeScript iyo deployment tests, kadib sameeyaa database-enabled hosting build. GitHub Actions → workflow run → Artifacts → hosting-build waxaa laga soo dejisan karaa build-ka.
 
-Dirista hosting-ka waa dansan tahay ilaa aad DEPLOY_ENABLED=true dejiso. Build-ka keliya ma beddelo website-ka live-ka ah.
+Dirista hosting-ka waa dansan tahay ilaa aad DEPLOY_ENABLED=true dejiso. Build-ka keliya ma beddelo website-ka live-ka ah. Manual dry-run wuxuu tijaabin karaa xiriirka iyadoo diristu dansan tahay.
 
-## Hal mar: hosting-ka ku xir GitHub
+## FTPS: habka account-kan loo diyaariyey
+
+Screenshot-ka cPanel wuxuu xaqiijiyey account githubdeploy@idogtc.com inuu ku kooban yahay /home2/idogtcco/public_html, explicit FTPS port 21. FTP account-ka root-kiisa / ayaa ah public_html; waddo public_html kale ha ku darin.
+
+Server certificate-ku wuxuu ku qoran yahay srv1101.sostectechno.com. Waxaa la xaqiijiyey in ftp.idogtc.com iyo server-kaas ay isku IP yihiin (65.108.15.232), xiriirka TLS ee hostname-ka server-kana uu certificate verification gudbay. Sidaas darteed hostname-ka FTPS ee la adeegsanayo waa srv1101.sostectechno.com. Certificate verification lama daminayo.
+
+Repository Variables:
+
+| Variable | Qiimaha |
+|---|---|
+| DEPLOY_METHOD | ftps |
+| DEPLOY_ENABLED | false ilaa xiriirka la tijaabiyo |
+| SOSTEK_FTP_HOST | srv1101.sostectechno.com |
+| SOSTEK_FTP_PORT | 21 |
+| SOSTEK_FTP_USER | githubdeploy@idogtc.com |
+
+Password-ka kaliya adiga ayaa gelinaya: https://github.com/barkulannews-rgb/idogtc/settings/secrets/actions/new
+
+- Name: SOSTEK_FTP_PASSWORD
+- Secret: password-ka FTP account-ka githubdeploy@idogtc.com (ma aha kan cPanel ama database-ka).
+- Add secret riix. Password-ka repo ama chat ha gelin.
+
+Markaas Actions ? Build and deploy IDO website ? Run workflow ? main ? dry_run=true. Preview-gu wuu shaqayn karaa iyadoo DEPLOY_ENABLED=false. Wuxuu hubiyaa login-ka, certificate-ka iyo inuu folder-ku yahay website-ka IDO; upload ama folder cusub ma sameeyo. Haddii preview-gu gudbo, DEPLOY_ENABLED=true deji, kadib Run workflow dry_run=false si upload-ka koowaad loo sameeyo. Push kasta oo main ah kadib si otomaatig ah ayuu u dirayaa code-ka.
+
+FTPS uploader-ku ma tirtiro faylal. Assets iyo API code ayuu marka hore diraa isagoo adeegsanaya temporary files iyo rename; index.html ayuu ugu dambayn beddelaa. Xogta database-ka, uploads, root .htaccess, seed.json, schema.sql iyo config-ga gaarka ah lama beddelayo. Mustaqbalka haddii API-gu yeesho faylal cusub oo PHP ah, allowlist-ka deployment-ka si cad ugu dar.
+
+## SSH: hab kale haddii hosting-ku mustaqbalka taageero
+
+Qaybtan isticmaal oo keliya haddii DEPLOY_METHOD aanu ftps ahayn.
+
+## Hal mar: SSH-ga hosting-ka ku xir GitHub
 
 1. cPanel → SSH Access. Xaqiiji Sostek inay account-ka u fasaxeen SSH shell iyo rsync. SSH/SFTP oo keliya, shell la'aan, kuma filna workflow-kan. Haddii aysan jirin, ha shidin DEPLOY_ENABLED; artifact-ka ZIP ahaan ayaa loo isticmaali karaa ilaa hab FTPS gaar ah la diyaariyo.
 2. Samee SSH key pair gaar u ah deployment-ka. Public key-ga geli cPanel → Manage SSH Keys → Import Key → Authorize. Private key-ga geli GitHub Secret, repo ama chat ha gelin. cPanel password-ka iyo database password-ka workflow-ku uma baahna.

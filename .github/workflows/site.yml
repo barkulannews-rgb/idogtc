@@ -26,7 +26,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: node --test tests/deploy.test.mjs
+      - run: node --test tests/deploy*.test.mjs
       - run: npm run build:hosting
       - name: Save hosting build
         uses: actions/upload-artifact@v4
@@ -38,8 +38,8 @@ jobs:
 
   deploy:
     needs: build
-    # No hosting connection is attempted until the owner enables this variable.
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    # A manual preview is allowed before automatic uploads are enabled.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (vars.DEPLOY_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.dry_run))
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -52,11 +52,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
       - uses: actions/download-artifact@v4
         with:
           name: hosting-build
           path: release/public_html
       - name: Upload application files with SSH
+        if: vars.DEPLOY_METHOD != 'ftps'
         env:
           IDO_SSH_HOST: ${{ secrets.SOSTEK_SSH_HOST }}
           IDO_SSH_USER: ${{ secrets.SOSTEK_SSH_USER }}
@@ -66,3 +69,12 @@ jobs:
           IDO_DEPLOY_PATH: ${{ vars.SOSTEK_DEPLOY_PATH }}
           IDO_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
         run: node scripts/deploy-hosting.mjs
+      - name: Upload application files with FTPS
+        if: vars.DEPLOY_METHOD == 'ftps'
+        env:
+          IDO_FTP_HOST: ${{ vars.SOSTEK_FTP_HOST }}
+          IDO_FTP_USER: ${{ vars.SOSTEK_FTP_USER }}
+          IDO_FTP_PORT: ${{ vars.SOSTEK_FTP_PORT }}
+          IDO_FTP_PASSWORD: ${{ secrets.SOSTEK_FTP_PASSWORD }}
+          IDO_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        run: node scripts/deploy-ftps.mjs

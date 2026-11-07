@@ -20,7 +20,7 @@ Read [hosting/AKHRI-MARKA-HORE.md](hosting/AKHRI-MARKA-HORE.md) before uploading
 
 Repository: https://github.com/barkulannews-rgb/idogtc
 
-The Actions workflow builds the hosting bundle on pushes and pull requests. Automatic uploads are disabled until the repository variable `DEPLOY_ENABLED=true` is configured with the Sostek SSH credentials and exact document root. Routine deployments preserve the database, uploads, private config, hosting `.htaccess`, seed and SQL schema. Read [the Somali connection guide](hosting/GITHUB-DEPLOY-SO.md) for the one-time setup and dry-run instructions.
+The Actions workflow builds the hosting bundle on pushes and pull requests. Set `DEPLOY_METHOD=ftps` to use the dedicated FTP account rooted at `public_html`; explicit FTPS is required and TLS certificate verification stays enabled. Automatic uploads remain disabled until `DEPLOY_ENABLED=true`; a manual dry-run can test the connection first. An SSH alternative remains available. Routine deployments preserve the database, uploads, private config, hosting `.htaccess`, seed and SQL schema. Read [the Somali connection guide](hosting/GITHUB-DEPLOY-SO.md) for the one-time setup and dry-run instructions.
 
 ## Verification
 
