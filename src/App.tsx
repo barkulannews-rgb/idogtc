@@ -12,6 +12,7 @@ import { Product } from './types/store';
 import { I18N } from './data/i18n';
 import { productPrice, quoteLabel } from './utils/productPrice';
 import { ProductPrice } from './components/ProductPrice';
+import { categoryImage } from './utils/categoryImage';
 import { getHeaderSettings, headerText, headerWhatsApp } from './data/headerSettings';
 import { api, DATABASE_MODE, reportApiError } from './utils/api';
 import { DatabaseStoreProvider } from './context/DatabaseStoreProvider';
@@ -800,7 +801,7 @@ function Storefront() {
                 className={`bg-white p-2.5 sm:p-3 flex items-center gap-3 sm:gap-4 shadow-sm border transition-all cursor-pointer group rounded-sm ${selectedCategory === cat.name ? 'border-[#FFD333] bg-[#FFFBEB]' : 'border-[#E5E5E5] hover:shadow-md hover:border-[#FFD333]'}`}
               >
                 <div className="w-16 h-16 sm:w-24 sm:h-24 bg-[#F5F5F5] rounded overflow-hidden shrink-0 relative">
-                  <img src={cat.img} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={categoryImage(cat, products)} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
                 </div>
                 <div className="flex-1 min-w-0">

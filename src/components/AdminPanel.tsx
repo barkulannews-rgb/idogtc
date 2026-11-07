@@ -16,6 +16,7 @@ import { processImageFile } from '../utils/imageUpload';
 import { HeaderEditor } from './HeaderEditor';
 import { getHeaderSettings } from '../data/headerSettings';
 import './AdminPanel.css';
+import { categoryImage } from '../utils/categoryImage';
 
 interface AdminPanelProps {
   onBackToStore: () => void;
@@ -383,7 +384,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
   const handleOpenCategoryModal = (cat?: CategoryItem, index?: number) => {
     if (cat && typeof index === 'number') {
       setEditingCategoryIndex(index);
-      setCategoryForm({ ...cat });
+      setCategoryForm({ ...cat, img: categoryImage(cat, products) });
     } else {
       setEditingCategoryIndex(null);
       setCategoryForm({
@@ -1032,7 +1033,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                 {categories.map((c, idx) => (
                   <div key={idx} className="bg-[#1E293B] border border-[#334155] rounded-xl p-4 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <img src={c.img} alt={c.name} className="w-12 h-12 object-cover rounded bg-[#0F172A] border border-[#334155] shrink-0" />
+                      <img src={categoryImage(c, products)} alt={c.name} className="w-12 h-12 object-cover rounded bg-[#0F172A] border border-[#334155] shrink-0" />
                       <div className="min-w-0">
                         <h4 className="font-bold text-xs text-white truncate">{c.name}</h4>
                         <span className="text-[10px] text-[#94A3B8]">{c.count}</span>
