@@ -127,6 +127,20 @@ test('PHP + MariaDB API integration', async t => {
     assert.equal((await visitor('subscribe', 'POST', { email: 'invalid' })).status, 400);
     assert.equal((await visitor('subscribe', 'POST', { email: 'customer@example.com' })).status, 200);
   });
+  await t.test('quote-only orders preserve item identity without pretending unknown prices are zero', async () => {
+    const changed = structuredClone(snapshot);
+    const product = changed.state.products[0];
+    product.priceOnRequest = true; product.sku = 'BM-TEST'; product.price = 'Request quote';
+    const saved = await admin('store', 'PUT', changed);
+    assert.equal(saved.status, 200, JSON.stringify(saved.value)); snapshot = saved.value;
+    const result = await visitor('orders', 'POST', { items: [{ productId: product.id, quantity: 2 }], revision: snapshot.revision, requestId: randomUUID() });
+    assert.equal(result.status, 201);
+    assert.equal(result.value.order.hasUnpricedItems, true);
+    assert.equal(result.value.order.items[0].price, 'Request quote');
+    assert.equal(result.value.order.items[0].productId, product.id);
+    assert.equal(result.value.order.items[0].sku, 'BM-TEST');
+    assert.equal(result.value.order.totalAmount, 0);
+  });
   await t.test('logout revokes server access', async () => {
     assert.equal((await admin('logout', 'POST', {})).status, 200);
     assert.equal((await admin('orders')).status, 401);

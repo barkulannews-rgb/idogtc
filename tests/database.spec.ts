@@ -1,8 +1,13 @@
 import { test, expect, BrowserContext } from '@playwright/test';
 import fs from 'node:fs';
 
-function database() {
+function database(withCatalogue = false) {
   let snapshot = { state: JSON.parse(fs.readFileSync('release/public_html/api/seed.json', 'utf8')), revision: 1 };
+  if (withCatalogue) {
+    const catalogue = JSON.parse(fs.readFileSync('catalogue/idogtc-catalogue-2026-11.json', 'utf8'));
+    snapshot.state.products.push(...catalogue.products.map((product: object, index: number) => ({ ...product, id: 1000 + index })));
+    snapshot.state.categories.push(...catalogue.categories);
+  }
   let failSave = false;
   return {
     fail: () => { failSave = true; },
@@ -41,6 +46,55 @@ test('server login ignores a forged local auth flag and hides demo access', asyn
   await page.locator('input[type="password"]').fill('admin123');
   await page.getByRole('button', { name: 'Login to Control Panel' }).click();
   await expect(page.getByText('Invalid username or password.')).toBeVisible();
+});
+
+test('all catalogue pages are reachable and quote-only products retain their item codes', async ({ page, context }) => {
+  await database(true).connect(context);
+  await page.goto('/');
+  await expect(page.locator('#recent')).toContainText('260 products');
+  await page.getByLabel('Catalogue page', { exact: true }).selectOption('13');
+  await expect(page.locator('#recent')).toContainText('PT-0098');
+  await page.getByLabel('Catalogue group', { exact: true }).selectOption('Paints & Coatings');
+  await expect(page.locator('#recent')).toContainText('98 products');
+  await page.getByLabel('Catalogue group', { exact: true }).selectOption('All');
+  await page.locator('#site-header input[type="text"]').fill('BM-0141');
+  await expect(page.locator('#recent')).toContainText('1 products');
+  await expect(page.locator('#recent')).toContainText('Steel Scaffolding');
+  await expect(page.locator('#recent')).toContainText('Request quote');
+  await expect(page.locator('#recent')).not.toContainText('$0.00');
+  await expect(page.locator('#recent .product-item')).toHaveCount(1);
+  await page.locator('#recent h3').click();
+  await expect(page.getByText('Code: BM-0141', { exact: false })).toBeVisible();
+  await expect(page.getByText('Illustration - actual product may vary.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Add to Cart \(1 units\)/ }).click();
+  await page.getByTitle('Cart', { exact: true }).filter({ visible: true }).click();
+  await expect(page.getByRole('button', { name: /Order via WhatsApp/ })).toBeVisible();
+  await expect(page.locator('body')).toContainText('Request quote');
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test('admin can price an imported item without losing its code, unit or illustration status', async ({ page, context }) => {
+  await database(true).connect(context);
+  await page.goto('/admin');
+  await page.locator('input[type="text"]').fill('owner');
+  await page.locator('input[type="password"]').fill('owner-test-password');
+  await page.getByRole('button', { name: 'Login to Control Panel' }).click();
+  await page.getByRole('button', { name: /^Products/ }).click();
+  await page.getByPlaceholder('Search by product name, category, or price...').fill('PT-0098');
+  await page.getByTitle('Edit Product', { exact: true }).click();
+  await expect(page.getByLabel('Price on request', { exact: true })).toBeChecked();
+  await expect(page.getByLabel('Item code', { exact: true })).toHaveValue('PT-0098');
+  await expect(page.getByLabel('Product unit', { exact: true })).toHaveValue('Piece');
+  await page.getByLabel('Price on request', { exact: true }).uncheck();
+  await page.getByPlaceholder('$34.50', { exact: true }).fill('$8.50');
+  await page.getByRole('button', { name: 'Save Product', exact: true }).click();
+  await expect(page.locator('form')).toHaveCount(0);
+  await expect(page.locator('tbody')).toContainText('$8.50');
+  await page.getByTitle('Edit Product', { exact: true }).click();
+  await expect(page.getByLabel('Item code', { exact: true })).toHaveValue('PT-0098');
+  await expect(page.getByLabel('Illustration image', { exact: true })).toBeChecked();
 });
 
 test('catalog saves are shared with another visitor and failures keep the edit form open', async ({ page, context, browser }) => {

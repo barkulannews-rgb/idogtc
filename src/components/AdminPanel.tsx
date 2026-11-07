@@ -8,6 +8,7 @@ import {
 import { useStore } from '../context/StoreContext';
 import { Product, SlideItem, CategoryItem, OrderInquiry, PromoBannerItem, PartnerItem } from '../types/store';
 import { I18N } from '../data/i18n';
+import { quoteLabel } from '../utils/productPrice';
 import { readStored, writeStored } from '../utils/storage';
 import { api, DATABASE_MODE, reportApiError, session } from '../utils/api';
 import { ImagePickerField } from './ImagePickerField';
@@ -73,7 +74,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
   // Product modal state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [productForm, setProductForm] = useState({
+  const [productForm, setProductForm] = useState<Omit<Product, 'id'>>({
     name: '',
     category: 'Foodstuffs & Commodities',
     price: '$0.00',
@@ -302,7 +303,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
         image: product.image,
         origin: product.origin,
         specs: product.specs,
-        isFeatured: product.isFeatured ?? false
+        isFeatured: product.isFeatured ?? false,
+        sku: product.sku || '', unit: product.unit || '', catalogueGroup: product.catalogueGroup,
+        priceOnRequest: product.priceOnRequest || false, imageIsIllustration: product.imageIsIllustration || false
       });
     } else {
       setEditingProduct(null);
@@ -327,12 +330,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
     try {
     e.preventDefault();
     const normalizedPrice = productForm.price.trim().replace(/^\$\s*/, '').replace(/,/g, '');
-    const parsedNum = Number(normalizedPrice);
-    if (!/^\d+(\.\d{1,2})?$/.test(normalizedPrice) || !Number.isFinite(parsedNum) || parsedNum < 0) {
+    const parsedNum = productForm.priceOnRequest ? 0 : Number(normalizedPrice);
+    if (!productForm.priceOnRequest && (!/^\d+(\.\d{1,2})?$/.test(normalizedPrice) || !Number.isFinite(parsedNum) || parsedNum < 0)) {
       showToast(language === 'en' ? 'Enter a valid price, e.g. $34.50' : 'Geli qiime sax ah, tusaale $34.50');
       return;
     }
-    const finalData = { ...productForm, numericPrice: parsedNum };
+    const sku = (productForm.sku || '').trim().toUpperCase();
+    if (sku && products.some(product => product.id !== editingProduct?.id && product.sku?.toUpperCase() === sku)) { showToast('Item code already exists / Code-kan hore ayuu u jiraa'); return; }
+    const finalData = { ...productForm, sku, numericPrice: parsedNum, price: productForm.priceOnRequest ? 'Request quote' : productForm.price, oldPrice: productForm.priceOnRequest ? '' : productForm.oldPrice };
 
     if (editingProduct) {
       await updateProduct(editingProduct.id, finalData);
@@ -534,7 +539,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
     const matchesSearch = productSearch === '' || 
       p.name.toLowerCase().includes(productSearch.toLowerCase()) || 
       p.category.toLowerCase().includes(productSearch.toLowerCase()) ||
-      p.price.toLowerCase().includes(productSearch.toLowerCase());
+      p.price.toLowerCase().includes(productSearch.toLowerCase()) ||
+      (p.sku || '').toLowerCase().includes(productSearch.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -915,6 +921,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                                 <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded bg-[#0F172A] border border-[#334155] shrink-0" />
                                 <div>
                                   <p className="font-bold text-white line-clamp-1">{p.name}</p>
+                                  {p.sku && <p className="text-[10px] text-amber-300 font-mono">{p.sku}</p>}
                                   <p className="text-[10px] text-[#94A3B8] line-clamp-1">{p.specs}</p>
                                 </div>
                               </div>
@@ -925,7 +932,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                               </span>
                             </td>
                             <td className="p-3.5 font-mono font-bold text-emerald-400">
-                              {p.price}
+                              {p.priceOnRequest ? quoteLabel(language) : p.price}
                             </td>
                             <td className="p-3.5 font-mono text-[#94A3B8] line-through">
                               {p.oldPrice}
@@ -1096,14 +1103,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                         {o.items.map((it, idx) => (
                           <div key={idx} className="flex items-center justify-between text-xs text-slate-300">
                             <span>• {it.productName} (x{it.quantity})</span>
-                            <span className="font-mono text-emerald-400">{it.price}</span>
+                            <span className="font-mono text-emerald-400">{it.priceOnRequest ? quoteLabel(language) : it.price}</span>
                           </div>
                         ))}
                       </div>
 
                       <div className="pt-2 border-t border-[#334155] flex items-center justify-between text-xs">
                         <span className="text-[#94A3B8]">{t.estimatedTotal}:</span>
-                        <span className="font-mono font-bold text-white text-sm">${o.totalAmount.toFixed(2)}</span>
+                        <span className="font-mono font-bold text-white text-sm">{o.hasUnpricedItems ? quoteLabel(language) : '$' + o.totalAmount.toFixed(2)}</span>
                       </div>
                     </div>
                   ))
@@ -1463,6 +1470,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="text-xs text-slate-300">Item code / SKU<input aria-label="Item code" value={productForm.sku || ''} onChange={event => setProductForm({ ...productForm, sku: event.target.value })} maxLength={100} className="w-full px-3 py-2 bg-[#0F172A] border border-[#475569] rounded text-white" /></label>
+                <label className="text-xs text-slate-300">Unit / Halbeeg<input aria-label="Product unit" value={productForm.unit || ''} onChange={event => setProductForm({ ...productForm, unit: event.target.value })} maxLength={100} className="w-full px-3 py-2 bg-[#0F172A] border border-[#475569] rounded text-white" /></label>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" aria-label="Price on request" checked={Boolean(productForm.priceOnRequest)} onChange={event => setProductForm({ ...productForm, priceOnRequest: event.target.checked })} />Qiime weydii / Price on request</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">{t.category}</label>
                   <select 
@@ -1480,7 +1492,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                   <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">{t.wholesalePrice}</label>
                   <input 
                     type="text" 
-                    required
+                    required={!productForm.priceOnRequest} disabled={Boolean(productForm.priceOnRequest)}
                     value={productForm.price}
                     onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                     placeholder="$34.50"
@@ -1526,7 +1538,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
               <ImagePickerField 
                 label={t.productImage}
                 value={productForm.image}
-                onChange={(url) => setProductForm({ ...productForm, image: url })}
+                onChange={(url) => setProductForm({ ...productForm, image: url, imageIsIllustration: false })}
                 category={productForm.category}
                 mediaItems={mediaItems}
                 onUploadNew={addMediaItem}
@@ -1534,6 +1546,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                 onShowToast={showToast}
               />
 
+              <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" aria-label="Illustration image" checked={Boolean(productForm.imageIsIllustration)} onChange={event => setProductForm({ ...productForm, imageIsIllustration: event.target.checked })} />Sawir tusaale ah / Illustration image</label>
               <div className="flex items-center gap-2 pt-1">
                 <input 
                   type="checkbox"

@@ -66,7 +66,7 @@ export function DatabaseStoreProvider({ children }: { children: React.ReactNode 
     updateCompanySettings: fields => change(s => { s.companySettings = { ...s.companySettings, ...fields }; }),
     recordOrder: async order => {
       const items = order.items.map(item => {
-        const product = current.current!.state.products.find(p => p.name === item.productName);
+        const product = current.current!.state.products.find(p => item.productId !== undefined ? p.id === item.productId : p.name === item.productName);
         if (!product) throw new Error('A product is no longer available. Please refresh.');
         return { productId: product.id, quantity: item.quantity };
       });

@@ -11,6 +11,11 @@ export interface Product {
   origin: string;
   specs: string;
   isFeatured?: boolean;
+  sku?: string;
+  unit?: string;
+  catalogueGroup?: string;
+  priceOnRequest?: boolean;
+  imageIsIllustration?: boolean;
 }
 
 export interface SlideItem {
@@ -27,6 +32,7 @@ export interface CategoryItem {
   count: string;
   id: string;
   img: string;
+  catalogueGroup?: string;
 }
 
 export interface CompanySettings {
@@ -64,8 +70,9 @@ export interface OrderInquiry {
   id: string;
   date: string;
   customerName?: string;
-  items: { productName: string; quantity: number; price: string }[];
+  items: { productName: string; quantity: number; price: string; productId?: number; sku?: string; priceOnRequest?: boolean }[];
   totalAmount: number;
+  hasUnpricedItems?: boolean;
   status: 'New' | 'Contacted' | 'Fulfilled';
 }
 

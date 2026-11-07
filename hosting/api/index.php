@@ -103,10 +103,18 @@ function validateState(array $state): void {
         if ($name === '' || in_array($name, $names, true)) fail('Category names must be unique.');
         $names[] = $name;
     }
+    $productCodes = [];
     foreach ($state['products'] as $product) {
         if (!isset($product['id']) || !is_int($product['id']) || $product['id'] < 1 || !isset($product['numericPrice']) || !is_numeric($product['numericPrice']) || (float)$product['numericPrice'] < 0 || (float)$product['numericPrice'] > 1000000000) fail('Invalid product price or ID.');
         if (!in_array(strtolower($product['category']), $names, true)) fail('A product category does not exist.');
         foreach (['rating','reviews'] as $field) if (!isset($product[$field]) || !is_numeric($product[$field])) fail('Invalid product rating.');
+        foreach (['priceOnRequest','imageIsIllustration'] as $field) if (isset($product[$field]) && !is_bool($product[$field])) fail('Invalid product option.');
+        foreach (['sku','unit','catalogueGroup'] as $field) if (isset($product[$field]) && (!is_string($product[$field]) || strlen($product[$field]) > 200)) fail('Invalid product detail.');
+        if (!empty($product['sku'])) {
+            $code = strtoupper(trim($product['sku']));
+            if (isset($productCodes[$code])) fail('Item codes must be unique.');
+            $productCodes[$code] = true;
+        }
     }
 }
 function images(array $value): array {
@@ -235,17 +243,19 @@ try {
             $snapshot = stored($db);
             if (($input['revision'] ?? null) !== $snapshot['revision']) fail('Prices or products have changed. Refresh before ordering.', 409);
             $products = $snapshot['state']['products'];
-            $items = []; $totalCents = 0;
+            $items = []; $totalCents = 0; $hasUnpricedItems = false;
             foreach ($input['items'] as $item) {
                 if (!is_array($item) || !is_int($item['quantity'] ?? null) || $item['quantity'] < 1 || $item['quantity'] > 1000000) fail('Invalid quantity.');
                 $found = null;
                 foreach ($products as $product) if ($product['id'] === ($item['productId'] ?? null)) { $found = $product; break; }
                 if (!$found) fail('A product is no longer available. Please refresh.');
-                $cents = (int)round((float)$found['numericPrice'] * 100);
+                $quote = !empty($found['priceOnRequest']);
+                $hasUnpricedItems = $hasUnpricedItems || $quote;
+                $cents = $quote ? 0 : (int)round((float)$found['numericPrice'] * 100);
                 $totalCents += $cents * $item['quantity'];
-                $items[] = ['productName' => $found['name'], 'quantity' => $item['quantity'], 'price' => '$' . number_format($cents / 100, 2, '.', '')];
+                $items[] = ['productName' => $found['name'], 'productId' => $found['id'], 'sku' => $found['sku'] ?? '', 'quantity' => $item['quantity'], 'price' => $quote ? 'Request quote' : '$' . number_format($cents / 100, 2, '.', ''), 'priceOnRequest' => $quote];
             }
-            $order = ['id' => 'ORD-' . bin2hex(random_bytes(16)), 'date' => gmdate('Y-m-d'), 'items' => $items, 'totalAmount' => $totalCents / 100, 'status' => 'New'];
+            $order = ['id' => 'ORD-' . bin2hex(random_bytes(16)), 'date' => gmdate('Y-m-d'), 'items' => $items, 'totalAmount' => $totalCents / 100, 'hasUnpricedItems' => $hasUnpricedItems, 'status' => 'New'];
             $query = $db->prepare('INSERT IGNORE INTO ido_orders (id, request_id, payload) VALUES (?, ?, ?)');
             $query->execute([$order['id'], $input['requestId'], encode($order)]);
             if ($query->rowCount() === 0) {
