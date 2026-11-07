@@ -97,3 +97,5 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #e5be2c;
 }
+/* Disabled purchase actions remain legible and visibly inactive. */
+.product-item button:disabled { opacity: .45; cursor: not-allowed; }

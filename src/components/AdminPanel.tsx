@@ -307,6 +307,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
         origin: product.origin,
         specs: product.specs,
         isFeatured: product.isFeatured ?? false,
+        available: product.available !== false,
         sku: product.sku || '', unit: product.unit || '', catalogueGroup: product.catalogueGroup,
         priceOnRequest: product.priceOnRequest || false, imageIsIllustration: product.imageIsIllustration || false
       });
@@ -914,13 +915,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                         <th className="p-3.5">{t.wholesalePrice}</th>
                         <th className="p-3.5">{t.oldPrice}</th>
                         <th className="p-3.5">{t.origin}</th>
+                        <th className="p-3.5">{language === 'en' ? 'Availability' : 'Helitaanka'}</th>
                         <th className="p-3.5 text-right">{language === 'en' ? 'Actions' : 'Ficilada'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#334155] text-slate-200">
                       {filteredAdminProducts.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="p-8 text-center text-[#94A3B8]">
+                          <td colSpan={7} className="p-8 text-center text-[#94A3B8]">
                             {t.noProductsFound}
                           </td>
                         </tr>
@@ -950,6 +952,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                             </td>
                             <td className="p-3.5 text-[#94A3B8] text-[11px]">
                               {p.origin}
+                            </td>
+                            <td className="p-3.5 text-right">
+                              <button type="button" aria-label={`Availability: ${p.name}`} aria-pressed={p.available !== false} onClick={async event => {
+                                const button = event.currentTarget; button.disabled = true;
+                                try { await updateProduct(p.id, { available: p.available === false }); showToast(p.available === false ? (language === 'en' ? 'Product resumed.' : 'Alaabta waa la hawlgeliyey.') : (language === 'en' ? 'Product stopped: out of stock.' : 'Alaabta waa la joojiyey.')); }
+                                catch (error) { reportApiError(error); } finally { button.disabled = false; }
+                              }} className={`rounded-lg border px-3 py-2 text-xs font-semibold whitespace-nowrap ${p.available === false ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>{p.available === false ? (language === 'en' ? 'Stopped · Resume' : 'La joojiyey · Fur') : (language === 'en' ? 'In stock · Stop' : 'Waa diyaar · Jooji')}</button>
                             </td>
                             <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-1.5">
@@ -1485,6 +1494,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                 <label className="text-xs text-slate-300">Unit / Halbeeg<input aria-label="Product unit" value={productForm.unit || ''} onChange={event => setProductForm({ ...productForm, unit: event.target.value })} maxLength={100} className="w-full px-3 py-2 bg-[#0F172A] border border-[#475569] rounded text-white" /></label>
               </div>
               <label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" aria-label="Price on request" checked={Boolean(productForm.priceOnRequest)} onChange={event => setProductForm({ ...productForm, priceOnRequest: event.target.checked })} />Qiime weydii / Price on request</label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 rounded-lg border border-slate-200 p-3"><input type="checkbox" aria-label="Product available" checked={productForm.available !== false} onChange={event => setProductForm({ ...productForm, available: event.target.checked })} />{language === 'en' ? 'In stock — allow orders. Uncheck to stop this product.' : 'Waa diyaar — dalab waa la oggol yahay. Ka saar calaamadda si aad u joojiso.'}</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">{t.category}</label>

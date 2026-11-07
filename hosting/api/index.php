@@ -142,7 +142,7 @@ function validateState(array $state): void {
         if (!isset($product['id']) || !is_int($product['id']) || $product['id'] < 1 || !isset($product['numericPrice']) || !is_numeric($product['numericPrice']) || (float)$product['numericPrice'] < 0 || (float)$product['numericPrice'] > 1000000000) fail('Invalid product price or ID.');
         if (!in_array(strtolower($product['category']), $names, true)) fail('A product category does not exist.');
         foreach (['rating','reviews'] as $field) if (!isset($product[$field]) || !is_numeric($product[$field])) fail('Invalid product rating.');
-        foreach (['priceOnRequest','imageIsIllustration'] as $field) if (isset($product[$field]) && !is_bool($product[$field])) fail('Invalid product option.');
+        foreach (['priceOnRequest','imageIsIllustration','available'] as $field) if (array_key_exists($field, $product) && !is_bool($product[$field])) fail('Invalid product option.');
         foreach (['sku','unit','catalogueGroup'] as $field) if (isset($product[$field]) && (!is_string($product[$field]) || strlen($product[$field]) > 200)) fail('Invalid product detail.');
         if (!empty($product['sku'])) {
             $code = strtoupper(trim($product['sku']));
@@ -283,6 +283,7 @@ try {
                 $found = null;
                 foreach ($products as $product) if ($product['id'] === ($item['productId'] ?? null)) { $found = $product; break; }
                 if (!$found) fail('A product is no longer available. Please refresh.');
+                if (($found['available'] ?? true) === false) fail('This product is out of stock. Please remove it from your cart.', 409);
                 $quote = !empty($found['priceOnRequest']);
                 $hasUnpricedItems = $hasUnpricedItems || $quote;
                 $cents = $quote ? 0 : (int)round((float)$found['numericPrice'] * 100);

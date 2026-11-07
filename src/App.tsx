@@ -85,7 +85,7 @@ function Storefront() {
   useEffect(() => {
     setCartItems(previous => previous.flatMap(item => {
       const product = products.find(p => p.id === item.product.id);
-      return product ? [{ ...item, product }] : [];
+      return product && product.available !== false ? [{ ...item, product }] : [];
     }));
     setWishlistItems(previous => previous.flatMap(item => {
       const product = products.find(p => p.id === item.id);
@@ -203,6 +203,7 @@ function Storefront() {
 
   // Cart operations
   const addToCart = (product: Product, quantity = 1) => {
+    if (product.available === false) { showToast(language === 'en' ? 'This product is out of stock.' : 'Alaabtan way dhammaatay.'); return; }
     if (!Number.isInteger(quantity) || quantity < 1) return;
     setCartItems(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -260,6 +261,7 @@ function Storefront() {
   // Direct WhatsApp order link from Cart and record to admin order store
   const sendWhatsAppOrder = async () => {
     if (cartItems.length === 0) return;
+    if (cartItems.some(item => products.find(product => product.id === item.product.id)?.available === false)) { showToast(language === 'en' ? 'Remove out-of-stock products before ordering.' : 'Ka saar alaabta dhammaatay.'); return; }
 
     const draft = window.open('', '_blank');
     try {
@@ -890,6 +892,7 @@ function Storefront() {
 
                     <div className="product-action flex items-center justify-center gap-1.5 sm:gap-2">
                       <button
+                        disabled={p.available === false}
                         onClick={() => addToCart(p, 1)}
                         className="w-8 h-8 sm:w-10 sm:h-10 bg-white text-[#3D464D] hover:bg-[#FFD333] hover:text-[#3D464D] flex items-center justify-center rounded shadow transition-colors cursor-pointer"
                         title="Add to Cart"
@@ -940,7 +943,8 @@ function Storefront() {
 
                       <div className="mt-1.5 sm:mt-2.5 flex items-center gap-1 sm:gap-1.5">
                         <button
-                          onClick={() => addToCart(p, 1)}
+                          disabled={p.available === false}
+                        onClick={() => addToCart(p, 1)}
                           className="flex-1 bg-[#3D464D] text-white hover:bg-[#FFD333] hover:text-[#3D464D] py-1.5 text-[9px] sm:text-[11px] font-bold uppercase transition-colors rounded flex items-center justify-center gap-1 shadow cursor-pointer truncate"
                         >
                           <ShoppingCart className="w-3 h-3 shrink-0" />
@@ -1365,6 +1369,7 @@ function Storefront() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
+                        disabled={p.available === false}
                         onClick={() => {
                           addToCart(p, 1);
                           toggleWishlist(p);
@@ -1458,6 +1463,7 @@ function Storefront() {
 
                 <div className="pt-2 flex flex-col gap-2">
                   <button
+                    disabled={selectedProduct.available === false}
                     onClick={() => {
                       addToCart(selectedProduct, modalQuantity);
                       setSelectedProduct(null);
@@ -1468,7 +1474,7 @@ function Storefront() {
                     <span>{t.addToInquiryCart} ({modalQuantity} units)</span>
                   </button>
 
-                  <a
+                  {selectedProduct.available !== false && <a
                     href={`https://wa.me/${(header.whatsappPhone || companySettings.bosasoPhone).replace(/[^0-9]/g, '') || '252905124444'}?text=${encodeURIComponent(`Hello ${companySettings.name}, inquiry for: ${selectedProduct.name}${selectedProduct.sku ? ` [${selectedProduct.sku}]` : ''} (${displayPrice(selectedProduct)}) - Quantity: ${modalQuantity}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1476,7 +1482,7 @@ function Storefront() {
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>{t.whatsAppQuoteNow}</span>
-                  </a>
+                  </a>}
                 </div>
               </div>
             </div>

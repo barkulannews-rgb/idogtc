@@ -16,6 +16,7 @@ export function ProductPrice({ product, company, language, format, quantity = 1 
   product: Product; company: CompanySettings; language: 'en' | 'so'; format: (amount: number) => string; quantity?: number;
 }) {
   const label = productPrice(product, language, format);
+  if (product.available === false) return <span className="text-rose-700 font-semibold">{language === 'en' ? 'Out of stock' : 'Alaabtu way dhammaatay'}</span>;
   return product.priceOnRequest
     ? <a href={productQuoteUrl(product, company, language, quantity)} target="_blank" rel="noopener noreferrer"
       className="inline-flex items-center rounded bg-[#DCFCE7] px-2.5 py-1.5 text-[#166534] underline decoration-dotted underline-offset-2 hover:bg-[#BBF7D0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"

@@ -16,6 +16,7 @@ export interface Product {
   catalogueGroup?: string;
   priceOnRequest?: boolean;
   imageIsIllustration?: boolean;
+  available?: boolean;
 }
 
 export interface SlideItem {
