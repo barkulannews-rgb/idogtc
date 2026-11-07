@@ -16,6 +16,8 @@ Read [hosting/AKHRI-MARKA-HORE.md](hosting/AKHRI-MARKA-HORE.md) before uploading
 
 `npm run build` still produces a static browser-storage preview in `dist`; use `build:hosting` for the database deployment.
 
+Header content is managed at `/admin` → **Header / Menu & Logo**: logo, brand text, bilingual menu labels and destinations, link ordering/visibility, office and service phones, and the WhatsApp quote number/message. Header settings are stored inside the existing company settings; older databases keep the original defaults until an administrator saves changes. No schema migration or setup rerun is needed.
+
 ## GitHub deployment
 
 Repository: https://github.com/barkulannews-rgb/idogtc

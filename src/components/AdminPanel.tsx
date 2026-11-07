@@ -7,12 +7,13 @@ import {
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Product, SlideItem, CategoryItem, OrderInquiry, PromoBannerItem, PartnerItem } from '../types/store';
-import { LOGO_DATA_URL } from '../utils/logoData';
 import { I18N } from '../data/i18n';
 import { readStored, writeStored } from '../utils/storage';
 import { api, DATABASE_MODE, reportApiError, session } from '../utils/api';
 import { ImagePickerField } from './ImagePickerField';
 import { processImageFile } from '../utils/imageUpload';
+import { HeaderEditor } from './HeaderEditor';
+import { getHeaderSettings } from '../data/headerSettings';
 
 interface AdminPanelProps {
   onBackToStore: () => void;
@@ -63,7 +64,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
   }, []);
 
   // Active navigation tab
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'slides' | 'categories' | 'media' | 'promos' | 'partners' | 'settings' | 'orders'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'slides' | 'categories' | 'media' | 'promos' | 'partners' | 'settings' | 'orders' | 'header'>('dashboard');
 
   // Search and filter for products
   const [productSearch, setProductSearch] = useState('');
@@ -197,6 +198,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
 
   // Company settings form
   const [settingsForm, setSettingsForm] = useState(companySettings);
+  useEffect(() => { if (activeTab === 'settings') setSettingsForm(companySettings); }, [activeTab]);
 
   // Toast feedback
   const [adminToast, setAdminToast] = useState('');
@@ -441,7 +443,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
         <div className="max-w-md w-full bg-[#1E293B] border border-[#334155] rounded-xl shadow-2xl p-6 sm:p-8 space-y-6">
           <div className="text-center space-y-3">
             <div className="w-16 h-16 mx-auto rounded-full p-1 bg-[#FFD333] flex items-center justify-center shadow">
-              <img src={LOGO_DATA_URL} alt="IDO GTC" className="w-full h-full object-contain rounded-full bg-white p-1" />
+              <img src={getHeaderSettings(companySettings).image} alt="IDO GTC" className="w-full h-full object-contain rounded-full bg-white p-1" />
             </div>
             <div className="flex items-center justify-center gap-1.5">
               <Shield className="w-4 h-4 text-[#FFD333]" />
@@ -553,7 +555,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
           
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full p-0.5 bg-[#FFD333] shrink-0">
-              <img src={LOGO_DATA_URL} alt="IDO GTC" className="w-full h-full object-contain rounded-full bg-white p-0.5" />
+              <img src={getHeaderSettings(companySettings).image} alt="IDO GTC" className="w-full h-full object-contain rounded-full bg-white p-0.5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -695,6 +697,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
               )}
             </button>
 
+            <button onClick={() => setActiveTab('header')} className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${activeTab === 'header' ? 'bg-[#FFD333] text-[#3D464D] shadow' : 'text-[#CBD5E1] hover:bg-[#334155]'}`}>
+              <LayoutDashboard className="w-4 h-4" /><span>Header / Menu & Logo</span>
+            </button>
             <button 
               onClick={() => setActiveTab('settings')}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${activeTab === 'settings' ? 'bg-[#FFD333] text-[#3D464D] shadow' : 'text-[#CBD5E1] hover:bg-[#334155]'}`}
@@ -732,6 +737,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
         <main className="md:col-span-9 space-y-6">
           
           {/* TAB 1: DASHBOARD OVERVIEW */}
+          {activeTab === 'header' && <HeaderEditor />}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               

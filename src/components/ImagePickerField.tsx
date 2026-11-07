@@ -3,6 +3,7 @@ import { Upload, Image as ImageIcon, Check, Link, ChevronDown, ChevronUp, Sparkl
 import { MediaItem } from '../types/store';
 import { processImageFile } from '../utils/imageUpload';
 import { I18N } from '../data/i18n';
+import { DATABASE_MODE } from '../utils/api';
 
 interface ImagePickerFieldProps {
   value: string;
@@ -13,6 +14,7 @@ interface ImagePickerFieldProps {
   onUploadNew: (title: string, url: string, category?: string) => void | MediaItem | Promise<void | MediaItem>;
   language: 'en' | 'so';
   onShowToast?: (msg: string) => void;
+  onProcessingChange?: (processing: boolean) => void;
 }
 
 export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
@@ -23,7 +25,8 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
   mediaItems,
   onUploadNew,
   language,
-  onShowToast
+  onShowToast,
+  onProcessingChange
 }) => {
   const t = I18N[language];
   const [showGallery, setShowGallery] = useState(false);
@@ -40,6 +43,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
 
     try {
       setIsProcessing(true);
+      onProcessingChange?.(true);
       const { dataUrl, name } = await processImageFile(file);
       const saved = await onUploadNew(name, dataUrl, category);
       onChange(saved ? saved.url : dataUrl);
@@ -51,6 +55,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
       alert(errorMsg);
     } finally {
       setIsProcessing(false);
+      onProcessingChange?.(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -128,7 +133,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
           </div>
 
           <p className="text-[10px] text-[#94A3B8] leading-tight">
-            {language === 'en' 
+            {DATABASE_MODE ? (language === 'en' ? 'Images are uploaded to the server. Save the form to apply your selection.' : 'Sawirka server-ka ayaa lagu kaydiyaa. Kaydi foomka si aad u isticmaasho.') : language === 'en'
               ? 'Selected images are stored in browser storage and will deploy to any hosting without broken links.' 
               : 'Sawirada waxaa lagu kaydiyaa kaydka browser-ka, waxayna si toos ah ugu shaqeynayaan hosting kasta.'}
           </p>

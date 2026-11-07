@@ -72,12 +72,34 @@ test('PHP + MariaDB API integration', async t => {
     assert.equal((await admin('store', 'PUT', invalid)).status, 400);
     assert.equal((await visitor('store')).value.revision, snapshot.revision);
   });
+  await t.test('header settings persist without replacing store content and unsafe links are rejected', async () => {
+    const changed = structuredClone(snapshot);
+    changed.state.companySettings.header = {
+      image: '/logo.png', logoAlt: 'New company logo', brandPrimary: 'New brand', brandSecondary: 'GTC',
+      tagline: { en: 'Trade partner', so: 'Ganacsi' }, whatsappPhone: '+971 50 123 4567', customerServicePhone: '',
+      whatsappMessage: { en: 'Please send a quote', so: '' },
+      labels: Object.fromEntries(['bosaso','dubai','customerService','search','categories','allCategories','whatsapp','wishlist','cart'].map(key => [key, { en: key, so: '' }])),
+      visibility: Object.fromEntries(['topBar','logo','brand','tagline','search','customerService','categories','whatsapp','currency','language','wishlist','cart'].map(key => [key, true])),
+      topLinks: [], navigation: [{ id: 'contact', label: { en: 'Talk to us', so: '' }, target: 'contact', visible: true }],
+    };
+    const result = await admin('store', 'PUT', changed);
+    assert.equal(result.status, 200, JSON.stringify(result.value));
+    const visible = (await visitor('store')).value;
+    assert.equal(visible.state.companySettings.header.brandPrimary, 'New brand');
+    assert.deepEqual(visible.state.products, snapshot.state.products);
+    const invalid = structuredClone(result.value);
+    invalid.state.companySettings.header.navigation[0].target = 'javascript:alert(1)';
+    assert.equal((await admin('store', 'PUT', invalid)).status, 400);
+    snapshot = result.value;
+  });
   await t.test('valid images become real upload files and SVG data is rejected', async () => {
     const changed = structuredClone(snapshot);
     changed.state.products[0].image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1cAAAAASUVORK5CYII=';
+    changed.state.companySettings.header.image = changed.state.products[0].image;
     const saved = await admin('store', 'PUT', changed);
     assert.equal(saved.status, 200, JSON.stringify(saved.value));
     assert.match(saved.value.state.products[0].image, /^\/uploads\/[a-f0-9]+\.png$/);
+    assert.equal(saved.value.state.companySettings.header.image, saved.value.state.products[0].image);
     const image = await fetch(new URL(saved.value.state.products[0].image, base));
     assert.equal(image.status, 200);
     const invalid = structuredClone(saved.value);

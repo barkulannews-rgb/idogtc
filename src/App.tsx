@@ -6,11 +6,11 @@ import {
   MessageCircle, Menu, Trash2, Plus, Minus, ArrowUp, Globe, Shield,
   Ship, Sun, Award, Anchor, Package
 } from 'lucide-react';
-import { LOGO_DATA_URL } from './utils/logoData';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AdminPanel } from './components/AdminPanel';
 import { Product } from './types/store';
 import { I18N } from './data/i18n';
+import { getHeaderSettings, headerText, headerWhatsApp } from './data/headerSettings';
 import { api, DATABASE_MODE, reportApiError } from './utils/api';
 import { DatabaseStoreProvider } from './context/DatabaseStoreProvider';
 import { readStored, writeStored, useStoredState } from './utils/storage';
@@ -35,6 +35,9 @@ function Storefront() {
   } = useStore();
 
   const t = I18N[language];
+  const header = getHeaderSettings(companySettings);
+  const ht = (value: import('./types/store').HeaderText) => headerText(value, language);
+  const headerWhatsAppUrl = headerWhatsApp(companySettings, language);
 
   // E-Commerce Functional State
   const [cartItems, setCartItems] = useStoredState<CartItem[]>('idogtc_cart', [], v => Array.isArray(v) && v.every(item => item && Number.isInteger(item.quantity) && item.quantity > 0 && item.product && Number.isFinite(item.product.id) && Number.isFinite(item.product.numericPrice)));
@@ -245,7 +248,7 @@ function Storefront() {
     });
     message += `\nEstimated Total: ${formatPrice(cartTotal)}\nDelivery Destination: Bosaso / Dubai\nPlease confirm consignment availability.`;
     
-    const phoneClean = companySettings.bosasoPhone.replace(/[^0-9]/g, '');
+    const phoneClean = (header.whatsappPhone || companySettings.bosasoPhone).replace(/[^0-9]/g, '');
     const url = `https://wa.me/${phoneClean || '252905124444'}?text=${encodeURIComponent(message)}`;
     if (draft) { draft.opener = null; draft.location.href = url; }
     else window.location.href = url;
@@ -280,43 +283,42 @@ function Storefront() {
         {/* ========================================================
             1. TOP BAR (MultiShop Exact Topbar + Language Switcher)
         ======================================================== */}
-        <div className="bg-[#F5F5F5] border-b border-[#E5E5E5] text-xs py-1.5 px-3 sm:px-4">
+        <header id="site-header">
+        {header.visibility.topBar && <>
+          <div className="bg-[#F5F5F5] border-b border-[#E5E5E5] text-xs py-1.5 px-3 sm:px-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
             
             <div className="flex items-center gap-2 sm:gap-4 text-[#6C757D] text-[11px] truncate">
-              <button onClick={() => scrollToSection('about')} className="hover:text-[#FFD333] transition-colors cursor-pointer">{t.about}</button>
-              <span>|</span>
-              <button onClick={() => scrollToSection('contact')} className="hover:text-[#FFD333] transition-colors cursor-pointer">{t.contact}</button>
-              <span>|</span>
-              <button onClick={() => scrollToSection('categories')} className="hover:text-[#FFD333] transition-colors cursor-pointer">{t.help}</button>
-              <span>|</span>
-              <button onClick={() => scrollToSection('contact')} className="hover:text-[#FFD333] transition-colors cursor-pointer">{t.faqs}</button>
+              {header.topLinks.filter(link => link.visible).map((link, index) => <React.Fragment key={link.id}>
+                {index > 0 && <span>|</span>}
+                <button onClick={() => scrollToSection(link.target)} className="hover:text-[#FFD333] transition-colors cursor-pointer">{ht(link.label)}</button>
+              </React.Fragment>)}
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 font-mono text-[11px] text-[#3D464D] shrink-0">
               <a href={`tel:${companySettings.bosasoPhone.replace(/\s+/g, '')}`} className="hidden sm:flex items-center gap-1 font-semibold hover:text-[#D97706]">
-                <Phone className="w-3 h-3 text-[#FFD333]" /> {t.bosasoHq}: {companySettings.bosasoPhone}
+                <Phone className="w-3 h-3 text-[#FFD333]" /> {ht(header.labels.bosaso)}: {companySettings.bosasoPhone}
               </a>
               <span className="hidden sm:inline">|</span>
               <a href={`tel:${companySettings.dubaiPhone.replace(/\s+/g, '')}`} className="flex items-center gap-1 font-semibold hover:text-[#D97706]">
-                <Phone className="w-3 h-3 text-[#FFD333]" /> {t.dubaiHub}: {companySettings.dubaiPhone}
+                <Phone className="w-3 h-3 text-[#FFD333]" /> {ht(header.labels.dubai)}: {companySettings.dubaiPhone}
               </a>
               <span className="hidden md:inline">|</span>
               
               {/* Currency Selector */}
-              <select 
+              {header.visibility.currency && (<select
                 value={selectedCurrency} 
                 onChange={(e) => setSelectedCurrency(e.target.value)} 
                 className="bg-transparent text-[11px] font-semibold text-[#3D464D] border-none focus:outline-none cursor-pointer"
               >
                 <option value="USD">USD ($)</option>
                 <option value="AED">AED (د.إ)</option>
-              </select>
+              </select>)}
 
               <span className="text-slate-400">|</span>
 
               {/* Language Switcher Toggle (English Default) */}
-              <div className="flex items-center gap-1 bg-white border border-[#CED4DA] px-2 py-0.5 rounded shadow-2xs">
+              {header.visibility.language && (<div className="flex items-center gap-1 bg-white border border-[#CED4DA] px-2 py-0.5 rounded shadow-2xs">
                 <Globe className="w-3 h-3 text-[#FFD333]" />
                 <button 
                   onClick={() => setLanguage('en')}
@@ -333,14 +335,15 @@ function Storefront() {
                 >
                   SO
                 </button>
-              </div>
+              </div>)}
 
             </div>
 
           </div>
         </div>
 
-        {/* ========================================================
+            </>}
+                    {/* ========================================================
             2. MIDDLE LOGO & SEARCH BAR (Compact & Clean on Mobile)
         ======================================================== */}
         <div className="bg-white py-2.5 sm:py-4 px-3 sm:px-4 border-b border-[#E5E5E5]">
@@ -349,18 +352,18 @@ function Storefront() {
             {/* Top row in mobile: Logo + Wishlist/Cart + Hamburger */}
             <div className="flex items-center justify-between w-full md:w-auto">
               <div className="flex items-center gap-2 sm:gap-3 cursor-pointer" onClick={() => scrollToSection('top')}>
-                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full p-0.5 sm:p-1 bg-[#FFD333] shadow-sm shrink-0">
+                {header.visibility.logo && (<div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full p-0.5 sm:p-1 bg-[#FFD333] shadow-sm shrink-0">
                   <img 
-                    src={LOGO_DATA_URL} 
-                    alt="IDO General Trading Co. Logo" 
+                    src={header.image}
+                    alt={header.logoAlt}
                     className="w-full h-full object-contain rounded-full bg-white p-0.5"
                   />
-                </div>
+                </div>)}
                 <div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-extrabold uppercase tracking-tight text-[#3D464D] flex items-center leading-none">
-                    <span className="bg-[#3D464D] text-[#FFD333] px-1.5 py-0.5 mr-1 font-extrabold rounded-sm">IDO</span>
-                    <span>GTC</span>
-                  </div>
+                  {header.visibility.brand && (<div className="text-xl sm:text-2xl md:text-3xl font-extrabold uppercase tracking-tight text-[#3D464D] flex items-center leading-none">
+                    <span className="bg-[#3D464D] text-[#FFD333] px-1.5 py-0.5 mr-1 font-extrabold rounded-sm">{header.brandPrimary}</span>
+                    <span>{header.brandSecondary}</span>
+                  </div>)}
                   <span className="block text-[9px] sm:text-[10px] md:text-[11px] font-medium tracking-wider text-[#6C757D] uppercase mt-0.5">
                     General Trading Co. • Bosaso & Dubai
                   </span>
@@ -369,29 +372,29 @@ function Storefront() {
 
               {/* Mobile Right Action Buttons (Wishlist + Cart Drawers) */}
               <div className="flex items-center gap-1.5 md:hidden">
-                <button 
+                {header.visibility.wishlist && (<button
                   onClick={() => setShowWishlistModal(true)}
                   className="p-1.5 border border-[#ced4da] text-[#3D464D] rounded relative bg-white hover:border-[#FFD333] transition-colors"
-                  title={t.wishlist}
-                  aria-label={t.wishlist}
+                  title={ht(header.labels.wishlist)}
+                  aria-label={ht(header.labels.wishlist)}
                 >
                   <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-[#D97706] fill-[#FFD333]' : ''}`} />
                   <span className="absolute -top-1.5 -right-1.5 bg-[#FFD333] text-[#3D464D] rounded-full text-[9px] w-4 h-4 flex items-center justify-center font-bold">
                     {wishlistItems.length}
                   </span>
-                </button>
+                </button>)}
 
-                <button 
+                {header.visibility.cart && (<button
                   onClick={() => setShowCartDrawer(true)}
                   className="p-1.5 border border-[#ced4da] text-[#3D464D] rounded relative bg-white hover:border-[#FFD333] transition-colors"
-                  title={t.cart}
-                  aria-label={t.cart}
+                  title={ht(header.labels.cart)}
+                  aria-label={ht(header.labels.cart)}
                 >
                   <ShoppingCart className="w-4 h-4" />
                   <span className="absolute -top-1.5 -right-1.5 bg-[#FFD333] text-[#3D464D] rounded-full text-[9px] w-4 h-4 flex items-center justify-center font-bold">
                     {totalCartCount}
                   </span>
-                </button>
+                </button>)}
 
                 <button 
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -404,10 +407,11 @@ function Storefront() {
             </div>
 
             {/* Search Box */}
+            {header.visibility.search && <>
             <div className="w-full md:w-1/2 flex items-stretch">
               <input 
                 type="text" 
-                placeholder={t.searchPlaceholder} 
+                placeholder={ht(header.labels.search)}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-3 py-2 sm:py-2.5 border border-[#ced4da] rounded-l text-xs sm:text-sm focus:outline-none focus:border-[#FFD333] font-normal"
@@ -433,35 +437,36 @@ function Storefront() {
               </button>
             </div>
 
-            {/* Desktop Customer Service & Cart Lockup */}
+            </>}
+                        {/* Desktop Customer Service & Cart Lockup */}
             <div className="hidden md:flex items-center justify-end gap-6">
-              <div className="text-left hidden lg:block">
-                <span className="block text-xs text-[#6C757D] font-normal">{t.customerService}:</span>
-                <span className="block text-sm font-bold text-[#3D464D] font-mono">{companySettings.bosasoPhone}</span>
-              </div>
+              {header.visibility.customerService && (<div className="text-left hidden lg:block">
+                <span className="block text-xs text-[#6C757D] font-normal">{ht(header.labels.customerService)}:</span>
+                <span className="block text-sm font-bold text-[#3D464D] font-mono">{header.customerServicePhone || companySettings.bosasoPhone}</span>
+              </div>)}
 
               <div className="flex items-center gap-3">
-                <button 
+                {header.visibility.wishlist && (<button
                   onClick={() => setShowWishlistModal(true)}
                   className="p-2.5 border border-[#ced4da] text-[#3D464D] hover:text-[#D97706] hover:border-[#FFD333] rounded relative bg-white transition-colors cursor-pointer"
-                  title={t.wishlist}
+                  title={ht(header.labels.wishlist)}
                 >
                   <Heart className={`w-4 h-4 ${wishlistItems.length > 0 ? 'text-[#D97706] fill-[#FFD333]' : ''}`} />
                   <span className="absolute -top-2 -right-2 bg-[#FFD333] text-[#3D464D] rounded-full text-[10px] w-5 h-5 flex items-center justify-center font-bold">
                     {wishlistItems.length}
                   </span>
-                </button>
+                </button>)}
 
-                <button 
+                {header.visibility.cart && (<button
                   onClick={() => setShowCartDrawer(true)}
                   className="p-2.5 border border-[#ced4da] text-[#3D464D] hover:text-[#FFD333] hover:border-[#FFD333] rounded relative bg-white transition-colors cursor-pointer"
-                  title={t.cart}
+                  title={ht(header.labels.cart)}
                 >
                   <ShoppingCart className="w-4 h-4" />
                   <span className="absolute -top-2 -right-2 bg-[#FFD333] text-[#3D464D] rounded-full text-[10px] w-5 h-5 flex items-center justify-center font-bold">
                     {totalCartCount}
                   </span>
-                </button>
+                </button>)}
               </div>
             </div>
 
@@ -475,6 +480,7 @@ function Storefront() {
           <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-stretch">
             
             {/* Categories Dropdown Toggle with Outside Click Listener */}
+            {header.visibility.categories && <>
             <div ref={categoryDropdownRef} className="relative md:w-64 shrink-0">
               <button 
                 onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
@@ -482,7 +488,7 @@ function Storefront() {
               >
                 <span className="flex items-center gap-2">
                   <Menu className="w-4 h-4" />
-                  <span>{t.categories}</span>
+                  <span>{ht(header.labels.categories)}</span>
                 </span>
                 <ChevronDown className={`w-4 h-4 transform transition-transform duration-300 ${categoryDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -498,7 +504,7 @@ function Storefront() {
                     }}
                     className={`w-full text-left px-5 py-2.5 text-xs font-semibold hover:bg-[#F5F5F5] flex items-center justify-between cursor-pointer ${selectedCategory === 'All' ? 'text-[#FFD333] font-bold bg-[#F5F5F5]' : ''}`}
                   >
-                    <span>{t.allCategories}</span>
+                    <span>{ht(header.labels.allCategories)}</span>
                     <span className="text-[10px] text-[#6C757D]">{products.length} Products</span>
                   </button>
                   {categories.map((c, i) => (
@@ -519,28 +525,25 @@ function Storefront() {
               )}
             </div>
 
-            {/* Desktop Navigation Menu */}
-            <nav className="hidden md:flex flex-1 items-center px-4 text-sm font-semibold uppercase tracking-wider gap-6 text-[#E5E5E5]">
-              <button onClick={() => scrollToSection('top')} className="text-[#FFD333] py-4 border-b-2 border-[#FFD333] cursor-pointer">{t.home}</button>
-              <button onClick={() => scrollToSection('categories')} className="py-4 hover:text-[#FFD333] transition-colors cursor-pointer">{t.categories}</button>
-              <button onClick={() => scrollToSection('featured')} className="py-4 hover:text-[#FFD333] transition-colors cursor-pointer">{t.featuredGoods}</button>
-              <button onClick={() => scrollToSection('recent')} className="py-4 hover:text-[#FFD333] transition-colors cursor-pointer">{t.recentArrivals}</button>
-              <button onClick={() => scrollToSection('about')} className="py-4 hover:text-[#FFD333] transition-colors cursor-pointer">{t.aboutUs}</button>
-              <button onClick={() => scrollToSection('contact')} className="py-4 hover:text-[#FFD333] transition-colors cursor-pointer">{t.contactUs}</button>
+            </>}
+                        {/* Desktop Navigation Menu */}
+            <nav className="hidden md:flex flex-1 min-w-0 flex-wrap items-center px-4 text-sm font-semibold uppercase tracking-wider gap-x-6 gap-y-0 text-[#E5E5E5]">
+              {header.navigation.filter(link => link.visible).map(link => <button key={link.id} onClick={() => scrollToSection(link.target)} className={link.target === 'top' ? 'text-[#FFD333] py-4 border-b-2 border-[#FFD333] cursor-pointer' : 'py-4 hover:text-[#FFD333] transition-colors cursor-pointer'}>{ht(link.label)}</button>)}
             </nav>
 
             {/* Direct WhatsApp Quote Button */}
+            {header.visibility.whatsapp && <>
             <div className="hidden lg:flex items-center gap-3 py-2">
               <a 
-                href={`https://wa.me/${companySettings.bosasoPhone.replace(/[^0-9]/g, '') || '252905124444'}`} 
+                href={headerWhatsAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#25D366] text-white px-4 py-2 rounded text-xs font-bold uppercase tracking-wider hover:bg-[#1EBE5D] transition-colors flex items-center gap-1.5 shadow"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
-                <span>{t.whatsAppQuote}</span>
+                <span>{ht(header.labels.whatsapp)}</span>
               </a>
-            </div>
+            </div></>}
 
           </div>
 
@@ -548,14 +551,10 @@ function Storefront() {
           {mobileMenuOpen && (
             <div className="md:hidden bg-[#2D343A] border-t border-[#4A5568] px-4 py-3 space-y-2.5 text-xs font-semibold uppercase animate-fadeIn">
               <div className="grid grid-cols-2 gap-2 text-[#E5E5E5]">
-                <button onClick={() => scrollToSection('top')} className="text-[#FFD333] p-2 bg-[#3D464D] rounded text-center">{t.home}</button>
-                <button onClick={() => scrollToSection('categories')} className="hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center">{t.categories}</button>
-                <button onClick={() => scrollToSection('featured')} className="hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center">{t.featuredGoods}</button>
-                <button onClick={() => scrollToSection('recent')} className="hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center">{t.recentArrivals}</button>
-                <button onClick={() => scrollToSection('about')} className="hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center">{t.aboutUs}</button>
-                <button onClick={() => scrollToSection('contact')} className="hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center">{t.contactUs}</button>
+                {header.navigation.filter(link => link.visible).map(link => <button key={link.id} onClick={() => scrollToSection(link.target)} className={link.target === 'top' ? 'text-[#FFD333] p-2 bg-[#3D464D] rounded text-center' : 'hover:text-[#FFD333] p-2 bg-[#3D464D] rounded text-center'}>{ht(link.label)}</button>)}
               </div>
 
+              {header.visibility.language && <>
               {/* Language Switcher in Mobile Drawer */}
               <div className="flex items-center justify-between bg-[#1E293B] p-2 rounded text-xs">
                 <span className="text-[#94A3B8] font-bold">Language / Luuqadda:</span>
@@ -575,20 +574,23 @@ function Storefront() {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[#4A5568] flex flex-col gap-2">
+              </>}
+              {header.visibility.whatsapp && (<div className="pt-2 border-t border-[#4A5568] flex flex-col gap-2">
                 <a 
-                  href={`https://wa.me/${companySettings.bosasoPhone.replace(/[^0-9]/g, '') || '252905124444'}`} 
+                  href={headerWhatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-[#25D366] text-white py-2 px-3 rounded text-[11px] font-bold uppercase text-center flex items-center justify-center gap-2"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  <span>WhatsApp Bosaso ({companySettings.bosasoPhone})</span>
+                  <span>{ht(header.labels.whatsapp)}</span>
                 </a>
-              </div>
+              </div>)}
             </div>
           )}
         </div>
+
+        </header>
 
         {/* ========================================================
             4. HERO CAROUSEL & 2 PROMO BANNERS
@@ -1156,7 +1158,7 @@ function Storefront() {
                 <div className="p-4 sm:p-6 bg-[#F5F5F5] rounded border border-[#E5E5E5] text-center space-y-2.5 sm:space-y-3 max-w-xs w-full shadow-inner">
                   <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full p-1 bg-[#FFD333] shadow">
                     <img 
-                      src={LOGO_DATA_URL} 
+                      src={header.image}
                       alt="IDO GTC Seal" 
                       className="w-full h-full object-contain rounded-full bg-white p-1.5"
                     />

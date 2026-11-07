@@ -39,6 +39,25 @@ export interface CompanySettings {
   bosasoAddress: string;
   dubaiAddress: string;
   aboutText: string;
+  header?: HeaderSettings;
+}
+
+export type HeaderTarget = 'top' | 'categories' | 'featured' | 'recent' | 'about' | 'contact';
+export interface HeaderText { en: string; so: string }
+export interface HeaderLink { id: string; label: HeaderText; target: HeaderTarget; visible: boolean }
+export interface HeaderSettings {
+  image: string;
+  logoAlt: string;
+  brandPrimary: string;
+  brandSecondary: string;
+  tagline: HeaderText;
+  whatsappPhone: string;
+  whatsappMessage: HeaderText;
+  customerServicePhone: string;
+  labels: Record<'bosaso' | 'dubai' | 'customerService' | 'search' | 'categories' | 'allCategories' | 'whatsapp' | 'wishlist' | 'cart', HeaderText>;
+  topLinks: HeaderLink[];
+  navigation: HeaderLink[];
+  visibility: Record<'topBar' | 'logo' | 'brand' | 'tagline' | 'search' | 'customerService' | 'categories' | 'whatsapp' | 'currency' | 'language' | 'wishlist' | 'cart', boolean>;
 }
 
 export interface OrderInquiry {

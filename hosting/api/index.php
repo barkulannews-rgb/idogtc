@@ -42,6 +42,33 @@ function limit(PDO $db, string $kind, int $maximum, int $seconds): void {
 function textFields(array $record, array $fields): void {
     foreach ($fields as $field) if (!isset($record[$field]) || !is_string($record[$field]) || strlen($record[$field]) > 20000) fail('Invalid field: ' . $field);
 }
+function validateHeader(array $header): void {
+    textFields($header, ['logoAlt','brandPrimary','brandSecondary','whatsappPhone','customerServicePhone']);
+    if (!isset($header['image']) || !is_string($header['image'])) fail('Invalid header logo.');
+    $text = function ($value): void {
+        if (!is_array($value)) fail('Invalid header text.');
+        foreach (['en','so'] as $language) if (!isset($value[$language]) || !is_string($value[$language]) || strlen($value[$language]) > 2000) fail('Invalid header translation.');
+    };
+    $text($header['tagline'] ?? null); $text($header['whatsappMessage'] ?? null);
+    if (!isset($header['labels'], $header['visibility']) || !is_array($header['labels']) || !is_array($header['visibility'])) fail('Invalid header options.');
+    foreach (['whatsappPhone','customerServicePhone'] as $field) {
+        $phone = preg_replace('/\D/', '', $header[$field]);
+        if ($header[$field] !== '' && (!preg_match('/^\+?[\d\s()-]+$/', $header[$field]) || strlen($phone) < 7 || strlen($phone) > 15)) fail('Use an international header phone number.');
+    }
+    foreach (['bosaso','dubai','customerService','search','categories','allCategories','whatsapp','wishlist','cart'] as $key) $text($header['labels'][$key] ?? null);
+    foreach (['topBar','logo','brand','tagline','search','customerService','categories','whatsapp','currency','language','wishlist','cart'] as $key) if (!isset($header['visibility'][$key]) || !is_bool($header['visibility'][$key])) fail('Invalid header visibility.');
+    foreach (['topLinks','navigation'] as $group) {
+        $links = $header[$group] ?? null;
+        if (!is_array($links) || array_values($links) !== $links || count($links) > 12) fail('Invalid header menu.');
+        $ids = [];
+        foreach ($links as $link) {
+            if (!is_array($link)) fail('Invalid header link.');
+            textFields($link, ['id','target']); $text($link['label'] ?? null);
+            if ($link['id'] === '' || in_array($link['id'], $ids, true) || trim($link['label']['en']) === '' || !isset($link['visible']) || !is_bool($link['visible']) || !in_array($link['target'], ['top','categories','featured','recent','about','contact'], true)) fail('Invalid header link.');
+            $ids[] = $link['id'];
+        }
+    }
+}
 function validateState(array $state): void {
     $definitions = [
         'products' => ['name','category','price','oldPrice','origin','specs'],
@@ -66,6 +93,10 @@ function validateState(array $state): void {
     }
     if (!isset($state['companySettings']) || !is_array($state['companySettings'])) fail('Invalid company settings.');
     textFields($state['companySettings'], ['name','shortName','domain','bosasoPhone','dubaiPhone','email','bosasoAddress','dubaiAddress','aboutText']);
+    if (array_key_exists('header', $state['companySettings'])) {
+        if (!is_array($state['companySettings']['header'])) fail('Invalid header settings.');
+        validateHeader($state['companySettings']['header']);
+    }
     $names = [];
     foreach ($state['categories'] as $category) {
         $name = strtolower(trim($category['name']));
