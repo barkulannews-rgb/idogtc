@@ -52,8 +52,11 @@ test('all catalogue pages are reachable and quote-only products retain their ite
   await database(true).connect(context);
   await page.goto('/');
   await expect(page.locator('#recent')).toContainText('260 products');
+  await expect(page.locator('#recent .product-item').first()).toContainText('BM-0001');
+  await expect(page.locator('#featured')).not.toContainText('Premium Basmati');
   await page.getByLabel('Catalogue page', { exact: true }).selectOption('13');
   await expect(page.locator('#recent')).toContainText('PT-0098');
+  await expect(page.locator('#recent')).toContainText('Premium Basmati');
   await page.getByLabel('Catalogue group', { exact: true }).selectOption('Paints & Coatings');
   await expect(page.locator('#recent')).toContainText('98 products');
   await page.getByLabel('Catalogue group', { exact: true }).selectOption('All');

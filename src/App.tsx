@@ -24,9 +24,9 @@ interface CartItem {
 // Inner Main Storefront Component
 function Storefront() {
   const {
-    products,
+    products: storeProducts,
     slides,
-    categories,
+    categories: storeCategories,
     companySettings,
     promoBanners,
     partners,
@@ -34,6 +34,11 @@ function Storefront() {
     setLanguage,
     recordOrder
   } = useStore();
+
+  // Prioritize the company's imported catalogue; retain older demo items at the end.
+  const products = React.useMemo(() => [...storeProducts].sort((a, b) => Number(Boolean(b.catalogueGroup)) - Number(Boolean(a.catalogueGroup))), [storeProducts]);
+  const categories = React.useMemo(() => [...storeCategories].sort((a, b) => Number(Boolean(b.catalogueGroup)) - Number(Boolean(a.catalogueGroup))), [storeCategories]);
+  const hasCompanyCatalogue = products.some(product => product.catalogueGroup);
 
   const t = I18N[language];
   const header = getHeaderSettings(companySettings);
@@ -170,7 +175,7 @@ function Storefront() {
   });
 
   // Featured (4 items) and Recent lists (10 items: 2 rows of 5)
-  const featuredList = filteredProducts.filter(p => p.isFeatured !== false).slice(0, 4);
+  const featuredList = filteredProducts.filter(p => p.isFeatured !== false && (!hasCompanyCatalogue || p.catalogueGroup)).slice(0, 4);
   const nonFeaturedProducts = filteredProducts.filter(p => !featuredList.some(fp => fp.id === p.id));
   const recentList = nonFeaturedProducts.slice(0, 10);
 
