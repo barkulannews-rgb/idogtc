@@ -1492,9 +1492,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToStore }) => {
                   <label className="block text-xs font-bold text-[#CBD5E1] uppercase mb-1">{t.wholesalePrice}</label>
                   <input 
                     type="text" 
-                    required={!productForm.priceOnRequest} disabled={Boolean(productForm.priceOnRequest)}
-                    value={productForm.price}
-                    onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                    required={!productForm.priceOnRequest}
+                    aria-label="Wholesale Price"
+                    value={productForm.priceOnRequest ? '' : productForm.price}
+                    onChange={(e) => setProductForm({ ...productForm, price: e.target.value, priceOnRequest: e.target.value.trim() === '' })}
                     placeholder="$34.50"
                     className="w-full px-3 py-2 bg-[#0F172A] border border-[#475569] rounded text-xs text-white focus:outline-none focus:border-[#FFD333]"
                   />

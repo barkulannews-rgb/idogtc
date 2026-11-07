@@ -90,14 +90,21 @@ test('admin can price an imported item without losing its code, unit or illustra
   await expect(page.getByLabel('Price on request', { exact: true })).toBeChecked();
   await expect(page.getByLabel('Item code', { exact: true })).toHaveValue('PT-0098');
   await expect(page.getByLabel('Product unit', { exact: true })).toHaveValue('Piece');
-  await page.getByLabel('Price on request', { exact: true }).uncheck();
-  await page.getByPlaceholder('$34.50', { exact: true }).fill('$8.50');
+  await expect(page.getByRole('textbox', { name: 'Wholesale Price', exact: true })).toBeEnabled();
+  await expect(page.getByRole('textbox', { name: 'Wholesale Price', exact: true })).toHaveValue('');
+  await page.getByRole('textbox', { name: 'Wholesale Price', exact: true }).fill('$8.50');
+  await expect(page.getByLabel('Price on request', { exact: true })).not.toBeChecked();
   await page.getByRole('button', { name: 'Save Product', exact: true }).click();
   await expect(page.locator('form')).toHaveCount(0);
   await expect(page.locator('tbody')).toContainText('$8.50');
   await page.getByTitle('Edit Product', { exact: true }).click();
   await expect(page.getByLabel('Item code', { exact: true })).toHaveValue('PT-0098');
   await expect(page.getByLabel('Illustration image', { exact: true })).toBeChecked();
+  await expect(page.getByRole('textbox', { name: 'Wholesale Price', exact: true })).toHaveValue('$8.50');
+  await page.getByRole('textbox', { name: 'Wholesale Price', exact: true }).fill('');
+  await expect(page.getByLabel('Price on request', { exact: true })).toBeChecked();
+  await page.getByRole('button', { name: 'Save Product', exact: true }).click();
+  await expect(page.locator('tbody')).toContainText('Request quote');
 });
 
 test('catalog saves are shared with another visitor and failures keep the edit form open', async ({ page, context, browser }) => {
